@@ -21,7 +21,7 @@ export function HeroSection({ id, name, subtitle }: HeroSectionProps) {
         <span />
         <span />
       </div>
-      <div className="section-content hero-content relative z-2 ml-auto mr-0 flex min-h-screen w-[min(1500px,calc(100%-5rem))] flex-col justify-end px-0 pb-28 pt-[5.7rem] pr-[calc(240px+2.6rem)] max-lg:w-[min(1200px,calc(100%-4rem))] max-lg:pr-0 max-sm:w-[calc(100%-2.2rem)] max-sm:pt-[5.2rem]">
+      <div className="section-content hero-content relative z-2 ml-auto mr-0 flex min-h-screen w-[min(1500px,calc(100%-5rem))] flex-col justify-end px-0 pb-28 pt-[5.7rem] pr-[calc(240px+2.6rem)] max-lg:w-[min(1200px,calc(100%-4rem))] max-lg:pr-0 max-sm:w-[calc(100%-2.2rem)] max-sm:pt-[8.6rem]">
         <div className="hero-topline flex items-center justify-between gap-4">
           <p className="section-kicker m-0 mb-6 text-(--muted) text-[0.72rem] uppercase tracking-[0.24em]">
             [Digital Portfolio Experience]

@@ -41,9 +41,9 @@ export function StorySection({
         <span />
         <span />
       </div>
-      <div className="section-content section-content-split relative z-2 ml-auto mr-0 grid min-h-[96vh] w-[min(1500px,calc(100%-5rem))] grid-cols-[minmax(260px,0.85fr)_minmax(360px,1.15fr)] items-center gap-20 px-0 pb-0 pt-[5.7rem] pr-[calc(240px+2.6rem)] max-lg:w-[min(1200px,calc(100%-4rem))] max-lg:grid-cols-1 max-lg:items-end max-lg:gap-12 max-lg:pb-24 max-lg:pr-0 max-sm:w-[calc(100%-2.2rem)] max-sm:pt-[5.2rem]">
+      <div className="section-content section-content-split relative z-2 ml-auto mr-0 grid min-h-[96vh] w-[min(1500px,calc(100%-5rem))] grid-cols-[minmax(260px,0.85fr)_minmax(360px,1.15fr)] items-center gap-20 px-0 pb-0 pt-[5.7rem] pr-[calc(240px+2.6rem)] max-lg:w-[min(1200px,calc(100%-4rem))] max-lg:grid-cols-1 max-lg:items-end max-lg:gap-12 max-lg:pb-24 max-lg:pr-0 max-sm:w-[calc(100%-2.2rem)] max-sm:pt-[8.6rem]">
         <div className="section-left">
-          <span className="section-number font-mono text-(--yellow-accent) text-[0.8rem] tracking-[0.24em] shadow-[0_0_14px_rgba(255,207,74,0.45)]">
+          <span className="section-number font-mono text-(--yellow-accent) text-[0.8rem] tracking-[0.24em] text-shadow-[0_0_14px_rgba(255,207,74,0.45)]">
             {number}
           </span>
           <h2 className="m-0 mt-4 text-[clamp(2rem,6.6vw,5.8rem)] leading-[0.9] uppercase tracking-[-0.03em]">
