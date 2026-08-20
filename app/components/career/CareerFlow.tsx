@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  careerTracks,
-  periodLabel,
-  TIMELINE_START,
-} from "@/app/data/career";
+import { periodLabel, TIMELINE_START } from "@/app/data/career";
 import { getDetail } from "@/app/data/details";
 import { onScrollFrame } from "@/app/lib/chapterProgress";
 import {
+  CAREER_ANCHOR_Y,
   CAREER_VIEW,
-  careerHeight,
-  layoutSpans,
+  careerScrollTrack,
+  layoutFlowBranches,
+  layoutFlowTrunk,
+  readCareerProgress,
+  trackStroke,
   yearTicks,
   yOf,
 } from "@/app/lib/careerLayout";
@@ -22,35 +22,44 @@ export function CareerFlow() {
   const groupRef = useRef<SVGGElement>(null);
   const playheadRef = useRef<SVGLineElement>(null);
   const playheadDotRef = useRef<SVGCircleElement>(null);
-  const spanRefs = useRef<Map<string, SVGGElement>>(new Map());
+  const branchRefs = useRef<Map<string, SVGGElement>>(new Map());
   const [openId, setOpenId] = useState<string | null>(null);
-  const spans = useMemo(() => layoutSpans(), []);
+  const branches = useMemo(() => layoutFlowBranches(), []);
+  const trunk = useMemo(() => layoutFlowTrunk(), []);
   const years = useMemo(() => yearTicks(), []);
-  const height = careerHeight();
   const openDetail = openId
-    ? getDetail(spans.find((span) => span.id === openId)?.detailId ?? "")
+    ? getDetail(branches.find((branch) => branch.id === openId)?.detailId ?? "")
     : undefined;
+
+  useEffect(() => {
+    const section = document.querySelector<HTMLElement>('[data-chapter="career"]');
+    if (section) {
+      section.style.minHeight = `calc(100vh + ${careerScrollTrack()}px)`;
+    }
+  }, []);
 
   useEffect(() => {
     const startY = yOf(TIMELINE_START);
     const endY = yOf("now");
 
-    return onScrollFrame((state) => {
-      const p = state.byId.career ?? 0;
-      const playY = startY + (endY - startY) * p;
+    return onScrollFrame(() => {
+      const section =
+        groupRef.current?.closest<HTMLElement>('[data-chapter="career"]') ?? null;
+      const progress = readCareerProgress(section);
+      const playY = startY + (endY - startY) * progress;
+      const shift = CAREER_ANCHOR_Y - playY;
+
       playheadRef.current?.setAttribute("y1", String(playY));
       playheadRef.current?.setAttribute("y2", String(playY));
       playheadDotRef.current?.setAttribute("cy", String(playY));
-
-      const shift = 210 - playY;
       groupRef.current?.setAttribute("transform", `translate(0 ${shift})`);
 
-      spans.forEach((span) => {
-        const live = playY >= span.y - 8 && playY <= span.y + span.height + 8;
-        spanRefs.current.get(span.id)?.classList.toggle("is-live", live);
+      branches.forEach((branch) => {
+        const live = playY >= branch.yStart - 8 && playY <= branch.yEnd + 8;
+        branchRefs.current.get(branch.id)?.classList.toggle("is-live", live);
       });
     });
-  }, [spans]);
+  }, [branches]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -62,6 +71,10 @@ export function CareerFlow() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  const toggleBranch = (id: string) => {
+    setOpenId((current) => (current === id ? null : id));
+  };
+
   return (
     <ChapterStage id="career" index="02" title="Karriereweg">
       <div className="career-board">
@@ -69,23 +82,8 @@ export function CareerFlow() {
           className="career-svg"
           viewBox={`0 0 ${CAREER_VIEW.width} 640`}
           role="img"
-          aria-label="Karrierefluss mit parallelen Spuren"
+          aria-label="Karrierefluss mit verzweigender Zeitlinie"
         >
-          {careerTracks.map((track, index) => {
-            const width = spans[0]?.width ?? 200;
-            const x =
-              CAREER_VIEW.padLeft + index * (width + CAREER_VIEW.laneGap);
-            return (
-              <text
-                key={track.id}
-                className="career-track"
-                x={x + 10}
-                y="28"
-              >
-                {track.label}
-              </text>
-            );
-          })}
           <g ref={groupRef}>
             {years.map((tick) => (
               <g key={tick.year}>
@@ -101,63 +99,78 @@ export function CareerFlow() {
                 />
               </g>
             ))}
-            {careerTracks.map((track, index) => {
-              const width = spans[0]?.width ?? 200;
-              const x =
-                CAREER_VIEW.padLeft + index * (width + CAREER_VIEW.laneGap);
-              return (
-                <g key={track.id}>
-                  <rect
-                    className="career-lane"
-                    x={x}
-                    y={CAREER_VIEW.padTop - 12}
-                    width={width}
-                    height={height - CAREER_VIEW.padTop + 8}
-                    rx="10"
-                  />
-                </g>
-              );
-            })}
-            {spans.map((span) => (
+
+            {trunk.map((segment, index) => (
+              <line
+                key={`trunk-${index}`}
+                className="career-flow-trunk"
+                x1={segment.x}
+                x2={segment.x}
+                y1={segment.y1}
+                y2={segment.y2}
+              />
+            ))}
+
+            {branches.map((branch) => (
               <g
-                key={span.id}
+                key={branch.id}
                 ref={(node) => {
                   if (node) {
-                    spanRefs.current.set(span.id, node);
+                    branchRefs.current.set(branch.id, node);
                   } else {
-                    spanRefs.current.delete(span.id);
+                    branchRefs.current.delete(branch.id);
                   }
                 }}
-                className={`career-span${openId === span.id ? " is-open" : ""}`}
+                className={`career-flow-branch${openId === branch.id ? " is-open" : ""}${branch.isPrimary ? " is-primary" : ""}`}
+                data-track={branch.trackId}
                 tabIndex={0}
                 role="button"
-                onClick={() =>
-                  setOpenId((current) => (current === span.id ? null : span.id))
-                }
+                aria-label={branch.label}
+                onClick={() => toggleBranch(branch.id)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
-                    setOpenId((current) => (current === span.id ? null : span.id));
+                    toggleBranch(branch.id);
                   }
                 }}
               >
-                <rect
-                  className="career-span-body"
-                  x={span.x + 8}
-                  y={span.y}
-                  width={span.width - 16}
-                  height={span.height}
-                  rx="8"
+                <path
+                  className="career-flow-hit"
+                  d={branch.path}
+                  stroke={trackStroke(branch.trackId)}
                 />
-                <text className="career-span-label" x={span.x + 20} y={span.y + 22}>
-                  {span.label}
+                <path
+                  className="career-flow-line"
+                  d={branch.path}
+                  stroke={trackStroke(branch.trackId)}
+                />
+                <circle
+                  className="career-flow-node"
+                  cx={branch.nodeX}
+                  cy={branch.nodeY}
+                  r="4"
+                  fill={trackStroke(branch.trackId)}
+                />
+                <text
+                  className="career-flow-label"
+                  x={branch.labelX}
+                  y={branch.labelY - 6}
+                  textAnchor={branch.labelSide === "left" ? "end" : "start"}
+                >
+                  {branch.label}
                 </text>
-                <text className="career-span-sub" x={span.x + 20} y={span.y + 38}>
-                  {periodLabel(span.start, span.end)}
-                  {span.placeholder ? "  ·  Platzhalter" : ""}
+                <text
+                  className="career-flow-sub"
+                  x={branch.labelX}
+                  y={branch.labelY + 12}
+                  textAnchor={branch.labelSide === "left" ? "end" : "start"}
+                >
+                  {periodLabel(branch.start, branch.end)}
+                  {branch.placeholder ? "  ·  Platzhalter" : ""}
                 </text>
               </g>
             ))}
+
             <line
               ref={playheadRef}
               className="career-playhead"

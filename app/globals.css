@@ -229,7 +229,7 @@ a {
 }
 
 .chapter[data-chapter="career"] {
-  min-height: 255vh;
+  min-height: calc(100vh + 900px);
 }
 
 .chapter[data-chapter="projects"] {
@@ -503,50 +503,83 @@ a {
   letter-spacing: 0.12em;
 }
 
-.career-track {
-  fill: var(--accent);
-  font-size: 12px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+.career-flow-trunk {
+  stroke: rgba(197, 210, 255, 0.18);
+  stroke-width: 2;
+  stroke-linecap: round;
 }
 
-.career-lane {
-  fill: rgba(182, 203, 255, 0.04);
-  stroke: var(--line);
-}
-
-.career-span {
+.career-flow-branch {
   cursor: pointer;
 }
 
-.career-span-body {
-  fill: rgba(8, 12, 20, 0.82);
-  stroke: rgba(197, 210, 255, 0.22);
-  transition: fill 0.25s ease, stroke 0.25s ease, filter 0.25s ease;
+.career-flow-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 18;
+  pointer-events: stroke;
 }
 
-.career-span.is-live .career-span-body {
-  fill: rgba(255, 207, 74, 0.12);
-  stroke: rgba(255, 207, 74, 0.7);
-  filter: drop-shadow(0 0 10px rgba(255, 207, 74, 0.28));
+.career-flow-line {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition:
+    stroke-width 0.25s ease,
+    filter 0.25s ease,
+    opacity 0.25s ease;
 }
 
-.career-span:focus-visible .career-span-body {
-  stroke: var(--yellow-accent);
+.career-flow-branch.is-primary .career-flow-line {
+  stroke-width: 3;
 }
 
-.career-span-label {
+.career-flow-node {
+  transition:
+    r 0.25s ease,
+    filter 0.25s ease;
+}
+
+.career-flow-branch.is-live .career-flow-line {
+  stroke-width: 3.5;
+  filter: drop-shadow(0 0 8px rgba(255, 207, 74, 0.45));
+}
+
+.career-flow-branch.is-live .career-flow-node {
+  r: 5;
+  filter: drop-shadow(0 0 6px rgba(255, 207, 74, 0.6));
+}
+
+.career-flow-branch.is-open .career-flow-line {
+  stroke-width: 4;
+  filter: drop-shadow(0 0 10px rgba(255, 207, 74, 0.55));
+}
+
+.career-flow-branch:focus-visible .career-flow-line {
+  stroke-width: 4;
+  filter: drop-shadow(0 0 8px rgba(255, 207, 74, 0.5));
+}
+
+.career-flow-label {
   fill: var(--foreground);
   font-size: 13px;
   font-weight: 700;
   pointer-events: none;
 }
 
-.career-span-sub {
+.career-flow-sub {
   fill: var(--muted);
   font-size: 10px;
   letter-spacing: 0.08em;
   pointer-events: none;
+}
+
+.career-playhead {
+  stroke: rgba(255, 207, 74, 0.35);
+  stroke-width: 1;
+  stroke-dasharray: 6 8;
 }
 
 .career-playhead-dot {
@@ -883,6 +916,10 @@ a {
   .hud-progress,
   .hud-item span:last-child {
     display: none;
+  }
+
+  .hud-item.is-active span:last-child {
+    display: inline;
   }
 
   .chapter-stage {

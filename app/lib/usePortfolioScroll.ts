@@ -57,7 +57,8 @@ export function usePortfolioScroll(
     const measure = () => {
       const byId: Record<string, number> = {};
       let activeIndex = 0;
-      let best = Number.POSITIVE_INFINITY;
+      const focusLine = window.innerHeight * 0.38;
+      let focused = false;
 
       sections.forEach((section, index) => {
         const rect = section.getBoundingClientRect();
@@ -67,12 +68,24 @@ export function usePortfolioScroll(
         section.style.setProperty("--p", String(progress));
         byId[chapters[index].id] = progress;
 
-        const dist = Math.abs(rect.top);
-        if (rect.bottom > window.innerHeight * 0.22 && dist < best) {
-          best = dist;
+        if (rect.top <= focusLine && rect.bottom > focusLine) {
           activeIndex = index;
+          focused = true;
         }
       });
+
+      if (!focused) {
+        let best = Number.POSITIVE_INFINITY;
+        sections.forEach((section, index) => {
+          const rect = section.getBoundingClientRect();
+          const center = rect.top + rect.height * 0.5;
+          const dist = Math.abs(center - focusLine);
+          if (rect.bottom > 0 && rect.top < window.innerHeight && dist < best) {
+            best = dist;
+            activeIndex = index;
+          }
+        });
+      }
 
       const doc = document.documentElement;
       const maxScroll = Math.max(doc.scrollHeight - window.innerHeight, 1);
