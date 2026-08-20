@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { HeroPointCloud } from "@/app/components/hero/HeroPointCloud";
 import { site } from "@/app/data/site";
 
 function splitChars(text: string, offset: number) {
@@ -22,6 +23,9 @@ export function HeroStage() {
   return (
     <section className="chapter" data-chapter="hero" id="hero">
       <div className="chapter-stage hero-stage">
+        <div className="hero-bubble-target">
+          <HeroPointCloud />
+        </div>
         <p className="hero-kicker">{site.location}</p>
         <h1 className="hero-title">
           <span className="hero-line">{splitChars(site.firstName, 0)}</span>

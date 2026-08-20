@@ -350,9 +350,40 @@ a {
   box-shadow: 0 0 10px rgba(255, 207, 74, 0.7);
 }
 
+.hero-bubble-target {
+  position: absolute;
+  top: 6%;
+  right: 1.5%;
+  z-index: 0;
+  width: min(54vw, 660px);
+  height: min(72vh, 720px);
+  pointer-events: auto;
+}
+
+.hero-bubble__host {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+}
+
+.hero-bubble__canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  background: transparent !important;
+  pointer-events: none;
+}
+
 .hero-stage {
+  position: relative;
+  z-index: 1;
   justify-content: flex-end;
   padding-bottom: 12vh;
+}
+
+.hero-stage > :not(.hero-bubble-target) {
+  position: relative;
+  z-index: 1;
 }
 
 .hero-kicker,
