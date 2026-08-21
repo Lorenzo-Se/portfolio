@@ -5,7 +5,9 @@ import { periodLabel, TIMELINE_START } from "@/app/data/career";
 import { getDetail } from "@/app/data/details";
 import { onScrollFrame } from "@/app/lib/chapterProgress";
 import {
+  activeBranchesAtY,
   CAREER_ANCHOR_Y,
+  CAREER_CARD,
   CAREER_VIEW,
   careerScrollTrack,
   layoutFlowBranches,
@@ -15,6 +17,7 @@ import {
   yearTicks,
   yOf,
 } from "@/app/lib/careerLayout";
+import { CareerActivityCard } from "@/app/components/career/CareerActivityCard";
 import { DetailPanel } from "@/app/components/ui/DetailPanel";
 import { ChapterStage } from "@/app/components/ui/ChapterStage";
 
@@ -23,13 +26,19 @@ export function CareerFlow() {
   const playheadRef = useRef<SVGLineElement>(null);
   const playheadDotRef = useRef<SVGCircleElement>(null);
   const branchRefs = useRef<Map<string, SVGGElement>>(new Map());
+  const activeKeyRef = useRef("");
   const [openId, setOpenId] = useState<string | null>(null);
   const branches = useMemo(() => layoutFlowBranches(), []);
   const trunk = useMemo(() => layoutFlowTrunk(), []);
   const years = useMemo(() => yearTicks(), []);
+  const initialPlayY = yOf(TIMELINE_START);
+  const [activeBranches, setActiveBranches] = useState(() =>
+    activeBranchesAtY(initialPlayY, branches),
+  );
   const openDetail = openId
     ? getDetail(branches.find((branch) => branch.id === openId)?.detailId ?? "")
     : undefined;
+  const playheadEndX = CAREER_CARD.left - 8;
 
   useEffect(() => {
     const section = document.querySelector<HTMLElement>('[data-chapter="career"]');
@@ -54,9 +63,19 @@ export function CareerFlow() {
       playheadDotRef.current?.setAttribute("cy", String(playY));
       groupRef.current?.setAttribute("transform", `translate(0 ${shift})`);
 
+      const live = activeBranchesAtY(playY, branches);
+      const nextActiveKey = live
+        .map((branch) => branch.id)
+        .sort()
+        .join("|");
+      if (nextActiveKey !== activeKeyRef.current) {
+        activeKeyRef.current = nextActiveKey;
+        setActiveBranches(live);
+      }
+
       branches.forEach((branch) => {
-        const live = playY >= branch.yStart - 8 && playY <= branch.yEnd + 8;
-        branchRefs.current.get(branch.id)?.classList.toggle("is-live", live);
+        const isLive = live.some((entry) => entry.id === branch.id);
+        branchRefs.current.get(branch.id)?.classList.toggle("is-live", isLive);
       });
     });
   }, [branches]);
@@ -92,7 +111,7 @@ export function CareerFlow() {
                 </text>
                 <line
                   x1="58"
-                  x2={CAREER_VIEW.width - 12}
+                  x2={playheadEndX}
                   y1={tick.y}
                   y2={tick.y}
                   stroke="rgba(197, 210, 255, 0.08)"
@@ -175,7 +194,7 @@ export function CareerFlow() {
               ref={playheadRef}
               className="career-playhead"
               x1="52"
-              x2={CAREER_VIEW.width - 16}
+              x2={playheadEndX}
               y1={yOf(TIMELINE_START)}
               y2={yOf(TIMELINE_START)}
             />
@@ -188,6 +207,7 @@ export function CareerFlow() {
             />
           </g>
         </svg>
+        <CareerActivityCard active={activeBranches} />
       </div>
       <DetailPanel detail={openDetail} onClose={() => setOpenId(null)} />
     </ChapterStage>

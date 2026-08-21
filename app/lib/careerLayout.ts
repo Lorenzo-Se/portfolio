@@ -21,9 +21,18 @@ export const CAREER_VIEW = {
   pxPerMonth: 14,
 } as const;
 
+/** Max. parallele Branch-Spuren pro Seite (2 × 2 = 4 Spuren gesamt). */
+export const MAX_BRANCH_LANE = 2;
+
+export const CAREER_CARD = {
+  left: 720,
+  width: 340,
+  gap: 16,
+} as const;
+
 export const FLOW = {
   left: 140,
-  right: CAREER_VIEW.width - 48,
+  right: CAREER_CARD.left - CAREER_CARD.gap,
   transition: 56,
   branchOffset: 118,
 } as const;
@@ -165,7 +174,7 @@ function resolveBranchSlot(
     }
   }
 
-  for (let lane = 1; lane <= 4; lane += 1) {
+  for (let lane = 1; lane <= MAX_BRANCH_LANE; lane += 1) {
     for (const side of ["right", "left"] as const) {
       const candidate = { side, lane };
       if (!occupied.has(slotKey(candidate))) {
@@ -409,7 +418,7 @@ function labelFitsOnSide(
   const anchorX = labelTextX(placement.lineX, side);
 
   if (side === "right") {
-    let maxX = CAREER_VIEW.width - 24;
+    let maxX = CAREER_CARD.left - LABEL.gap;
     for (const obstacle of obstacles) {
       if (obstacle.id === placement.id || obstacle.lineX <= placement.lineX + 1) {
         continue;
@@ -990,6 +999,34 @@ export function trackStroke(trackId: string): string {
     default:
       return "var(--line)";
   }
+}
+
+export function yToStamp(y: number): string {
+  const monthsFromStart = Math.max(
+    0,
+    Math.round((y - CAREER_VIEW.padTop) / CAREER_VIEW.pxPerMonth),
+  );
+  const [originYear, originMonth] = TIMELINE_START.split("-").map(Number);
+  const absoluteMonth = originYear * 12 + (originMonth - 1) + monthsFromStart;
+  const year = Math.floor(absoluteMonth / 12);
+  const month = (absoluteMonth % 12) + 1;
+  return `${year}-${String(month).padStart(2, "0")}`;
+}
+
+export function formatStamp(stamp: string): string {
+  const [year, month] = stamp.split("-");
+  return `${month}.${year}`;
+}
+
+export function activeBranchesAtY(
+  playY: number,
+  branches: FlowBranchLayout[],
+  tolerance = 8,
+): FlowBranchLayout[] {
+  return branches.filter(
+    (branch) =>
+      playY >= branch.yStart - tolerance && playY <= branch.yEnd + tolerance,
+  );
 }
 
 export function readCareerProgress(section: HTMLElement | null): number {
