@@ -2,8 +2,11 @@
 
 import { useEffect, type RefObject } from "react";
 import Lenis from "lenis";
+import Snap from "lenis/snap";
 import { chapters } from "@/app/lib/chapters";
 import { publishScrollState } from "@/app/lib/chapterProgress";
+import { projectSnapOffsets, projectsScrollTrack } from "@/app/lib/projectLayout";
+import { projects } from "@/app/data/projects";
 import { gsap, ScrollTrigger } from "@/app/lib/gsap";
 
 type Options = {
@@ -96,6 +99,26 @@ export function usePortfolioScroll(
     };
 
     let ticker: ((time: number) => void) | undefined;
+    let projectSnap: Snap | undefined;
+    const projectSnapRemovers: Array<() => void> = [];
+
+    const syncProjectSnaps = () => {
+      const section = root.querySelector<HTMLElement>('[data-chapter="projects"]');
+      if (!section) {
+        return;
+      }
+
+      section.style.minHeight = `calc(100vh + ${projectsScrollTrack(projects.length)}px)`;
+      if (!projectSnap) {
+        return;
+      }
+
+      projectSnapRemovers.splice(0).forEach((remove) => remove());
+      projectSnapOffsets(section, projects.length).forEach((offset) => {
+        projectSnapRemovers.push(projectSnap!.add(offset));
+      });
+      projectSnap.resize();
+    };
 
     if (!reducedMotion) {
       const lenis = new Lenis({
@@ -104,6 +127,13 @@ export function usePortfolioScroll(
         syncTouch: false,
       });
       lenisInstance = lenis;
+      projectSnap = new Snap(lenis, {
+        type: "proximity",
+        distanceThreshold: 180,
+        debounce: 320,
+        duration: 0.85,
+      });
+      syncProjectSnaps();
       lenis.on("scroll", () => {
         ScrollTrigger.update();
         measure();
@@ -114,6 +144,7 @@ export function usePortfolioScroll(
       gsap.ticker.add(ticker);
       gsap.ticker.lagSmoothing(0);
     } else {
+      syncProjectSnaps();
       sections.forEach((section) => section.style.setProperty("--p", "1"));
       publishScrollState({
         progress: 1,
@@ -124,6 +155,7 @@ export function usePortfolioScroll(
 
     const onResize = () => {
       ScrollTrigger.refresh();
+      syncProjectSnaps();
       measure();
     };
     window.addEventListener("resize", onResize);
@@ -133,6 +165,7 @@ export function usePortfolioScroll(
     const hashIndex = chapters.findIndex((chapter) => chapter.id === fromHash);
 
     requestAnimationFrame(() => {
+      syncProjectSnaps();
       measure();
       if (hashIndex > 0) {
         const target = sections[hashIndex];
@@ -150,6 +183,8 @@ export function usePortfolioScroll(
       if (ticker) {
         gsap.ticker.remove(ticker);
       }
+      projectSnapRemovers.forEach((remove) => remove());
+      projectSnap?.destroy();
       lenisInstance?.destroy();
       lenisInstance = null;
     };

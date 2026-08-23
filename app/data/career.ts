@@ -99,7 +99,7 @@ export const careerSpans: CareerSpan[] = [
     route: "branch",
     branchSide: "right",
     branchLane: 1,
-    start: "2024-011",
+    start: "2024-11",
     end: "now",
     location: "Ort",
     detailId: "career-work-1",

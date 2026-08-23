@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { projects } from "@/app/data/projects";
 import { getDetail } from "@/app/data/details";
 import { onScrollFrame } from "@/app/lib/chapterProgress";
+import { projectIndexFromProgress } from "@/app/lib/projectLayout";
 import { DetailPanel } from "@/app/components/ui/DetailPanel";
 import { ChapterStage } from "@/app/components/ui/ChapterStage";
 
@@ -17,7 +18,7 @@ export function ProjectCoverflow() {
     return onScrollFrame((state) => {
       const p = state.byId.projects ?? 0;
       const position = p * Math.max(projects.length - 1, 1);
-      const nextActive = Math.round(position);
+      const nextActive = projectIndexFromProgress(p, projects.length);
       setActive((current) => (current === nextActive ? current : nextActive));
       const cards = boardRef.current?.querySelectorAll<HTMLElement>("[data-card]");
       cards?.forEach((card, index) => {

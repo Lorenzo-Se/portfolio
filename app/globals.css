@@ -234,7 +234,7 @@ a {
 }
 
 .chapter[data-chapter="projects"] {
-  min-height: 245vh;
+  min-height: calc(100vh + 1560px);
 }
 
 .chapter[data-chapter="skills"] {
