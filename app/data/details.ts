@@ -70,34 +70,6 @@ export const details: Detail[] = [
     title: "Activ Fitness Dielsdorf",
     summary: "",
   },
-  {
-    id: "project-a",
-    eyebrow: "2023",
-    title: "myVKAZU",
-    summary: "Ein Intranet für den Verein VKAZU",
-    items: ["PHP", "HTML", "Bootstrap"],
-  },
-  {
-    id: "project-b",
-    eyebrow: "2025",
-    title: "ThreeRun",
-    summary: "Eine Website für die Anmeldung und Verwaltung von Langdistanzläufe und Märsche",
-    items: ["React", "Shadcn/UI", "Rest API", "Websocket", "Laravel", "MySQL", "OSRM"],
-  },
-  {
-    id: "project-c",
-    eyebrow: "2025",
-    title: "Projekt Gamma",
-    summary: "Platzhalter für das dritte Projekt.",
-    items: ["Feature 1", "Feature 2"],
-  },
-  {
-    id: "project-d",
-    eyebrow: "2026",
-    title: "Projekt Delta",
-    summary: "Platzhalter für das vierte Projekt.",
-    items: ["Feature 1", "Feature 2"],
-  },
 ];
 
 export function getDetail(id: string): Detail | undefined {

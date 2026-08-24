@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { periodLabel, TIMELINE_START } from "@/app/data/career";
-import { getDetail } from "@/app/data/details";
 import { onScrollFrame } from "@/app/lib/chapterProgress";
 import {
   activeBranchesAtY,
@@ -18,7 +17,6 @@ import {
   yOf,
 } from "@/app/lib/careerLayout";
 import { CareerActivityCard } from "@/app/components/career/CareerActivityCard";
-import { DetailPanel } from "@/app/components/ui/DetailPanel";
 import { ChapterStage } from "@/app/components/ui/ChapterStage";
 
 export function CareerFlow() {
@@ -27,7 +25,6 @@ export function CareerFlow() {
   const playheadDotRef = useRef<SVGCircleElement>(null);
   const branchRefs = useRef<Map<string, SVGGElement>>(new Map());
   const activeKeyRef = useRef("");
-  const [openId, setOpenId] = useState<string | null>(null);
   const branches = useMemo(() => layoutFlowBranches(), []);
   const trunk = useMemo(() => layoutFlowTrunk(), []);
   const years = useMemo(() => yearTicks(), []);
@@ -35,9 +32,6 @@ export function CareerFlow() {
   const [activeBranches, setActiveBranches] = useState(() =>
     activeBranchesAtY(initialPlayY, branches),
   );
-  const openDetail = openId
-    ? getDetail(branches.find((branch) => branch.id === openId)?.detailId ?? "")
-    : undefined;
   const playheadEndX = CAREER_CARD.left - 8;
 
   useEffect(() => {
@@ -79,20 +73,6 @@ export function CareerFlow() {
       });
     });
   }, [branches]);
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpenId(null);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
-  const toggleBranch = (id: string) => {
-    setOpenId((current) => (current === id ? null : id));
-  };
 
   return (
     <ChapterStage id="career" index="02" title="Karriereweg">
@@ -140,18 +120,8 @@ export function CareerFlow() {
                     branchRefs.current.delete(branch.id);
                   }
                 }}
-                className={`career-flow-branch${openId === branch.id ? " is-open" : ""}${branch.isPrimary ? " is-primary" : ""}`}
+                className={`career-flow-branch${branch.isPrimary ? " is-primary" : ""}`}
                 data-track={branch.trackId}
-                tabIndex={0}
-                role="button"
-                aria-label={branch.label}
-                onClick={() => toggleBranch(branch.id)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    toggleBranch(branch.id);
-                  }
-                }}
               >
                 <path
                   className="career-flow-hit"
@@ -209,7 +179,6 @@ export function CareerFlow() {
         </svg>
         <CareerActivityCard active={activeBranches} />
       </div>
-      <DetailPanel detail={openDetail} onClose={() => setOpenId(null)} />
     </ChapterStage>
   );
 }

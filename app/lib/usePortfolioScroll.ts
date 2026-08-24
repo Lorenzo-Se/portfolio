@@ -5,7 +5,12 @@ import Lenis from "lenis";
 import Snap from "lenis/snap";
 import { chapters } from "@/app/lib/chapters";
 import { publishScrollState } from "@/app/lib/chapterProgress";
-import { projectSnapOffsets, projectsScrollTrack } from "@/app/lib/projectLayout";
+import {
+  isInProjectsStickyRange,
+  projectSnapOffsets,
+  projectsScrollDelta,
+  projectsScrollTrack,
+} from "@/app/lib/projectLayout";
 import { projects } from "@/app/data/projects";
 import { gsap, ScrollTrigger } from "@/app/lib/gsap";
 
@@ -100,6 +105,7 @@ export function usePortfolioScroll(
 
     let ticker: ((time: number) => void) | undefined;
     let projectSnap: Snap | undefined;
+    let snapPausedForProjects = false;
     const projectSnapRemovers: Array<() => void> = [];
 
     const syncProjectSnaps = () => {
@@ -120,21 +126,65 @@ export function usePortfolioScroll(
       projectSnap.resize();
     };
 
+    const projectsSection = () =>
+      root.querySelector<HTMLElement>('[data-chapter="projects"]');
+
+    const syncProjectSnapState = () => {
+      if (!projectSnap) {
+        return;
+      }
+
+      const inProjects = isInProjectsStickyRange(projectsSection());
+      if (inProjects && !snapPausedForProjects) {
+        projectSnap.stop();
+        snapPausedForProjects = true;
+      } else if (!inProjects && snapPausedForProjects) {
+        projectSnap.start();
+        snapPausedForProjects = false;
+      }
+    };
+
     if (!reducedMotion) {
       const lenis = new Lenis({
-        lerp: 0.085,
+        lerp: 0.1,
         smoothWheel: true,
         syncTouch: false,
       });
+      lenis.options.virtualScroll = (data) => {
+        if (!isInProjectsStickyRange(projectsSection())) {
+          return true;
+        }
+
+        const { deltaX, deltaY, event } = data;
+        if (event.type.includes("wheel") && "ctrlKey" in event && event.ctrlKey) {
+          return true;
+        }
+
+        const delta = projectsScrollDelta(deltaX, deltaY);
+        if (delta === 0) {
+          return true;
+        }
+
+        if (event.cancelable) {
+          event.preventDefault();
+        }
+
+        lenis.scrollTo(lenis.targetScroll + delta, {
+          programmatic: false,
+          lerp: 0.1,
+        });
+        return false;
+      };
       lenisInstance = lenis;
       projectSnap = new Snap(lenis, {
         type: "proximity",
-        distanceThreshold: 180,
-        debounce: 320,
-        duration: 0.85,
+        distanceThreshold: 120,
+        debounce: 420,
+        duration: 0.65,
       });
       syncProjectSnaps();
       lenis.on("scroll", () => {
+        syncProjectSnapState();
         ScrollTrigger.update();
         measure();
       });
@@ -166,6 +216,7 @@ export function usePortfolioScroll(
 
     requestAnimationFrame(() => {
       syncProjectSnaps();
+      syncProjectSnapState();
       measure();
       if (hashIndex > 0) {
         const target = sections[hashIndex];

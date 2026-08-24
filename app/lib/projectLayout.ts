@@ -39,3 +39,31 @@ export function projectSnapOffsets(
     return stickyStart + track * progress;
   });
 }
+
+export function isInProjectsStickyRange(section: HTMLElement | null): boolean {
+  if (!section) {
+    return false;
+  }
+
+  const rect = section.getBoundingClientRect();
+  return rect.top <= 0 && rect.bottom >= window.innerHeight;
+}
+
+/** Maps wheel / touch deltas to vertical scroll while the coverflow is pinned. */
+export function projectsScrollDelta(deltaX: number, deltaY: number): number {
+  if (deltaX === 0 && deltaY === 0) {
+    return 0;
+  }
+
+  if (deltaX === 0) {
+    return deltaY;
+  }
+
+  if (deltaY === 0) {
+    return deltaX * 1.2;
+  }
+
+  const dominant = Math.abs(deltaY) >= Math.abs(deltaX) ? deltaY : deltaX * 1.2;
+  const secondary = Math.abs(deltaY) >= Math.abs(deltaX) ? deltaX * 1.2 : deltaY;
+  return dominant + secondary * 0.55;
+}

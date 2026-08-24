@@ -2,17 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { projects } from "@/app/data/projects";
-import { getDetail } from "@/app/data/details";
 import { onScrollFrame } from "@/app/lib/chapterProgress";
 import { projectIndexFromProgress } from "@/app/lib/projectLayout";
-import { DetailPanel } from "@/app/components/ui/DetailPanel";
 import { ChapterStage } from "@/app/components/ui/ChapterStage";
 
 export function ProjectCoverflow() {
   const boardRef = useRef<HTMLDivElement>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
   const [active, setActive] = useState(0);
-  const openDetail = openId ? getDetail(openId) : undefined;
+  const activeProject = projects[active];
 
   useEffect(() => {
     return onScrollFrame((state) => {
@@ -36,16 +33,6 @@ export function ProjectCoverflow() {
     });
   }, []);
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpenId(null);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
   return (
     <ChapterStage id="projects" index="03" title="Projekte">
       <div
@@ -53,13 +40,7 @@ export function ProjectCoverflow() {
         className="coverflow"
         role="listbox"
         aria-label="Projekte"
-        aria-activedescendant={`project-${projects[active]?.id}`}
-        tabIndex={0}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" && projects[active]) {
-            setOpenId(projects[active].id);
-          }
-        }}
+        aria-activedescendant={`project-${activeProject?.id}`}
       >
         {projects.map((project, index) => (
           <article
@@ -68,29 +49,65 @@ export function ProjectCoverflow() {
             data-card
             role="option"
             aria-selected={index === active}
-            className="coverflow-card"
-            onClick={() => setOpenId(project.id)}
+            className={`coverflow-card${index === active ? " is-active" : ""}${project.cover ? " has-media" : ""}`}
           >
+            <div className="coverflow-card__glow" aria-hidden />
+            <header className="coverflow-card__head">
+              <span className="coverflow-index">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              {project.placeholder ? (
+                <span className="coverflow-flag">Platzhalter</span>
+              ) : null}
+            </header>
             {project.cover ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={project.cover} alt="" className="coverflow-cover" />
+              <div className="coverflow-card__media">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={project.cover} alt="" className="coverflow-cover" />
+              </div>
             ) : null}
-            <span className="coverflow-index">
-              {String(index + 1).padStart(2, "0")}
-              {project.placeholder ? " · Platzhalter" : ""}
-            </span>
-            <h3>{project.title}</h3>
-            <p>{project.teaser}</p>
-            <div className="coverflow-tags">
-              {project.tags.map((tag) => (
-                <span key={tag}>{tag}</span>
-              ))}
+            <div className="coverflow-card__body">
+              <h3>{project.title}</h3>
+              <p>{project.teaser}</p>
             </div>
+            <footer className="coverflow-card__foot">
+              <span className="coverflow-stack-label">Stack</span>
+              <div className="coverflow-tags">
+                {project.techStack.map((tech) => (
+                  <span key={tech}>{tech}</span>
+                ))}
+              </div>
+            </footer>
           </article>
         ))}
       </div>
-      <p className="coverflow-lead">{projects[active]?.year}</p>
-      <DetailPanel detail={openDetail} onClose={() => setOpenId(null)} />
+      <div className="coverflow-meta">
+        <p className="coverflow-lead">{activeProject?.year}</p>
+        {activeProject?.demoUrl || activeProject?.githubUrl ? (
+          <div className="coverflow-links">
+            {activeProject.demoUrl ? (
+              <a
+                className="coverflow-link"
+                href={activeProject.demoUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Demo
+              </a>
+            ) : null}
+            {activeProject.githubUrl ? (
+              <a
+                className="coverflow-link"
+                href={activeProject.githubUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                GitHub
+              </a>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
     </ChapterStage>
   );
 }
