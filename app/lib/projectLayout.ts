@@ -1,4 +1,6 @@
 import { projects } from "@/app/data/projects";
+import { getScrollState } from "@/app/lib/chapterProgress";
+import { getLenis } from "@/app/lib/usePortfolioScroll";
 
 export const PROJECTS_SCROLL_STEP = 520;
 
@@ -47,6 +49,69 @@ export function isInProjectsStickyRange(section: HTMLElement | null): boolean {
 
   const rect = section.getBoundingClientRect();
   return rect.top <= 0 && rect.bottom >= window.innerHeight;
+}
+
+export function projectsScrollProgress(): number {
+  return getScrollState().byId.projects ?? 0;
+}
+
+export function readProjectsChapterScroll(section: HTMLElement): {
+  track: number;
+  scrolled: number;
+  progress: number;
+  position: number;
+} {
+  const track = Math.max(section.offsetHeight - window.innerHeight, 1);
+  const rect = section.getBoundingClientRect();
+  const scrolled = Math.min(Math.max(-rect.top, 0), track);
+  const progress = scrolled / track;
+  const position = progress * Math.max(projects.length - 1, 1);
+  return { track, scrolled, progress, position };
+}
+
+export function scrollToProjectIndex(
+  index: number,
+  onComplete?: () => void,
+  options?: { immediate?: boolean },
+): void {
+  const section = document.querySelector<HTMLElement>('[data-chapter="projects"]');
+  if (!section) {
+    onComplete?.();
+    return;
+  }
+
+  const offsets = projectSnapOffsets(section, projects.length);
+  const target = offsets[index];
+  if (target === undefined) {
+    onComplete?.();
+    return;
+  }
+
+  const lenis = getLenis();
+  const immediate = options?.immediate ?? false;
+  const currentScroll = lenis?.scroll ?? window.scrollY;
+
+  const finish = () => {
+    requestAnimationFrame(() => onComplete?.());
+  };
+
+  if (Math.abs(currentScroll - target) < 4) {
+    finish();
+    return;
+  }
+
+  if (lenis) {
+    lenis.scrollTo(target, {
+      duration: immediate ? 0 : 0.65,
+      immediate,
+      force: true,
+      onComplete: finish,
+    });
+    return;
+  }
+
+  window.scrollTo({ top: target, behavior: immediate ? "auto" : "smooth" });
+  finish();
 }
 
 /** Maps wheel / touch deltas to vertical scroll while the coverflow is pinned. */

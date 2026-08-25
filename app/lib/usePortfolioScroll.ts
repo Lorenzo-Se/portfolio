@@ -151,11 +151,23 @@ export function usePortfolioScroll(
         syncTouch: false,
       });
       lenis.options.virtualScroll = (data) => {
+        const { deltaX, deltaY, event } = data;
+        if (
+          event.target instanceof Element &&
+          (event.target.closest(".project-modal-root") ||
+            event.target.closest("[data-lenis-prevent]"))
+        ) {
+          return true;
+        }
+
+        if (document.body.classList.contains("project-modal-open")) {
+          return true;
+        }
+
         if (!isInProjectsStickyRange(projectsSection())) {
           return true;
         }
 
-        const { deltaX, deltaY, event } = data;
         if (event.type.includes("wheel") && "ctrlKey" in event && event.ctrlKey) {
           return true;
         }

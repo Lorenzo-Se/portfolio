@@ -233,10 +233,6 @@ a {
   min-height: calc(100vh + 900px);
 }
 
-.chapter[data-chapter="projects"] {
-  min-height: calc(100vh + 1560px);
-}
-
 .chapter[data-chapter="skills"] {
   min-height: 215vh;
 }
@@ -762,9 +758,24 @@ a {
     0 24px 60px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
   transform-style: preserve-3d;
+  pointer-events: none;
   transition:
     border-color 0.35s ease,
     box-shadow 0.35s ease;
+}
+
+.coverflow-card:focus-visible {
+  outline: 2px solid rgba(255, 207, 74, 0.55);
+  outline-offset: 3px;
+}
+
+.coverflow.is-modal-open .coverflow-card:not(.is-opening) {
+  opacity: 0.18 !important;
+  filter: blur(2px) !important;
+}
+
+.coverflow-card.is-opening {
+  visibility: hidden;
 }
 
 .coverflow-card.is-active {
@@ -977,6 +988,163 @@ a {
 
 .coverflow-link:hover {
   color: var(--yellow-accent);
+}
+
+.project-modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+}
+
+.project-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 7, 14, 0.72);
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+}
+
+.project-modal {
+  position: fixed;
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid rgba(255, 207, 74, 0.34);
+  background:
+    linear-gradient(165deg, rgba(255, 207, 74, 0.1), transparent 38%),
+    linear-gradient(320deg, rgba(182, 203, 255, 0.14), #080c14 62%);
+  box-shadow:
+    0 32px 80px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 207, 74, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  pointer-events: auto;
+}
+
+.project-modal__glow {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 207, 74, 0.65),
+    transparent
+  );
+}
+
+.project-modal__body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 1.25rem 1.35rem 1.35rem;
+}
+
+.project-modal__head {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.project-modal__head-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.project-modal__year {
+  color: var(--muted);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.project-modal__head h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+}
+
+.project-modal__close {
+  flex-shrink: 0;
+  border: 1px solid rgba(197, 210, 255, 0.18);
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  background: rgba(8, 12, 20, 0.7);
+  color: var(--foreground);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.project-modal__close:hover {
+  border-color: rgba(255, 207, 74, 0.35);
+  color: var(--yellow-accent);
+}
+
+.project-modal__media {
+  flex-shrink: 0;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid rgba(255, 207, 74, 0.2);
+  background:
+    linear-gradient(145deg, rgba(182, 203, 255, 0.06), rgba(8, 12, 20, 0.65));
+}
+
+.project-modal__cover {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.project-modal__description {
+  margin: 0;
+  color: rgba(154, 163, 181, 0.98);
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.project-modal__foot {
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(197, 210, 255, 0.08);
+}
+
+.project-modal__stack-label {
+  display: block;
+  margin-bottom: 0.55rem;
+  color: var(--muted);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.project-modal__links {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 1rem;
 }
 
 .skill-board {
