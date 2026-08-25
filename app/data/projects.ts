@@ -84,7 +84,7 @@ export const projects: Project[] = [
   },
   {
     id: "project-f",
-    title: "Kryptomanager",
+    title: "Kryptomanager (work in progress)",
     cover: "/projects/securities-manager.png",
     teaser:
       "Krypto-Portfolio selbst pflegen — Positionen erfassen, Gewinn verfolgen und den Überblick über alle Bestände behalten.",
