@@ -400,7 +400,7 @@ export function PortraitCloud({ reduced }: PortraitCloudProps) {
       aria-label={
         photoActive
           ? "Profilfoto — Foto angezeigt"
-          : "Profil-Scan — bei Hover Foto anzeigen"
+          : "Profil-Scan — Foto anzeigen"
       }
     >
       <div
@@ -429,7 +429,12 @@ export function PortraitCloud({ reduced }: PortraitCloudProps) {
           ? "Lege public/portrait-mesh.glb ab"
           : photoActive
             ? ""
-            : "Hover — das Bild erscheint"}
+            : (
+              <>
+                <span className="portrait-hint-hover">Hover — das Bild erscheint</span>
+                <span className="portrait-hint-touch">Tippen — das Bild erscheint</span>
+              </>
+            )}
       </p>
     </div>
   );

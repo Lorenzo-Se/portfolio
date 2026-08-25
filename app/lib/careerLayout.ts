@@ -11,31 +11,125 @@ import {
   spanVisualEnd,
   type CareerSpan,
 } from "@/app/data/career";
+import { MOBILE_MAX } from "@/app/lib/breakpoints";
 
-export const CAREER_VIEW = {
+export type CareerViewConfig = {
+  width: number;
+  padTop: number;
+  padLeft: number;
+  padRight: number;
+  padBottom: number;
+  pxPerMonth: number;
+};
+
+export type CareerCardConfig = {
+  left: number;
+  width: number;
+  gap: number;
+};
+
+export type CareerFlowConfig = {
+  left: number;
+  right: number;
+  transition: number;
+  branchOffset: number;
+};
+
+const DESKTOP_VIEW: CareerViewConfig = {
   width: 1100,
   padTop: 88,
   padLeft: 72,
   padRight: 28,
   padBottom: 48,
   pxPerMonth: 14,
-} as const;
+};
+
+const MOBILE_VIEW: CareerViewConfig = {
+  width: 1100,
+  padTop: 64,
+  padLeft: 36,
+  padRight: 28,
+  padBottom: 32,
+  pxPerMonth: 14,
+};
+
+const DESKTOP_CARD: CareerCardConfig = {
+  left: 720,
+  width: 340,
+  gap: 16,
+};
+
+const MOBILE_CARD: CareerCardConfig = {
+  left: MOBILE_VIEW.width - MOBILE_VIEW.padRight,
+  width: 0,
+  gap: 0,
+};
 
 /** Max. parallele Branch-Spuren pro Seite (2 × 2 = 4 Spuren gesamt). */
 export const MAX_BRANCH_LANE = 2;
 
-export const CAREER_CARD = {
-  left: 720,
-  width: 340,
-  gap: 16,
-} as const;
+export const CAREER_VIEW: CareerViewConfig = { ...DESKTOP_VIEW };
 
-export const FLOW = {
+export const CAREER_CARD: CareerCardConfig = { ...DESKTOP_CARD };
+
+export const FLOW: CareerFlowConfig = {
   left: 140,
-  right: CAREER_CARD.left - CAREER_CARD.gap,
+  right: DESKTOP_CARD.left - DESKTOP_CARD.gap,
   transition: 56,
   branchOffset: 118,
-} as const;
+};
+
+function applyDesktopCareerLayout() {
+  Object.assign(CAREER_VIEW, DESKTOP_VIEW);
+  Object.assign(CAREER_CARD, DESKTOP_CARD);
+  FLOW.left = 140;
+  FLOW.right = DESKTOP_CARD.left - DESKTOP_CARD.gap;
+  FLOW.transition = 56;
+  FLOW.branchOffset = 118;
+}
+
+function applyMobileCareerLayout() {
+  Object.assign(CAREER_VIEW, MOBILE_VIEW);
+  Object.assign(CAREER_CARD, MOBILE_CARD);
+  FLOW.left = 72;
+  FLOW.right = CAREER_VIEW.width - CAREER_VIEW.padRight;
+  FLOW.transition = 44;
+  FLOW.branchOffset = 88;
+}
+
+let careerLayoutMode: "desktop" | "mobile" = "desktop";
+
+function careerViewportWidth(width?: number): number {
+  if (width !== undefined) {
+    return width;
+  }
+  if (typeof window === "undefined") {
+    return MOBILE_MAX + 1;
+  }
+  return window.innerWidth;
+}
+
+export function syncCareerLayoutConfig(width?: number): boolean {
+  const viewportWidth = careerViewportWidth(width);
+  const mobile = viewportWidth <= MOBILE_MAX;
+  const nextMode = mobile ? "mobile" : "desktop";
+
+  if (nextMode === careerLayoutMode) {
+    return false;
+  }
+
+  careerLayoutMode = nextMode;
+  if (mobile) {
+    applyMobileCareerLayout();
+  } else {
+    applyDesktopCareerLayout();
+  }
+  return true;
+}
+
+export function getCareerViewConfig(width?: number): CareerViewConfig {
+  return careerViewportWidth(width) <= MOBILE_MAX ? MOBILE_VIEW : DESKTOP_VIEW;
+}
 
 /** Playhead bleibt in viewBox-Koordinaten auf dieser Y-Position. */
 export const CAREER_ANCHOR_Y = 300;

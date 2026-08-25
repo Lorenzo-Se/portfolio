@@ -27,7 +27,9 @@ import {
   syncSkillsChapterHeight,
 } from "@/app/lib/skillNavigation";
 import { useReducedMotion } from "@/app/lib/reducedMotion";
+import { useSkillMobileLayout } from "@/app/lib/skillViewport";
 import { ChapterStage } from "@/app/components/ui/ChapterStage";
+import { SkillTreeMobile } from "@/app/components/skills/SkillTreeMobile";
 
 const { width: VIEW_W, height: VIEW_H } = skillTreeConfig.viewport;
 
@@ -86,7 +88,14 @@ function applyCameraToGroup(
 }
 
 export function SkillTree() {
+  const isMobile = useSkillMobileLayout();
+  return isMobile ? <SkillTreeMobile /> : <SkillTreeDesktop />;
+}
+
+function SkillTreeDesktop() {
   const reducedMotion = useReducedMotion();
+  const treeConfig = skillTreeConfig;
+  const skillBoardRef = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<SkillTreeMode>("overview");
   const [exploreId, setExploreId] = useState("root");
   const [explorePage, setExplorePage] = useState(0);
@@ -127,9 +136,9 @@ export function SkillTree() {
   const explorePageCount = useMemo(
     () =>
       mode === "explore"
-        ? skillPageCount(exploreNode, skillTreeConfig.maxLeavesPerView)
+        ? skillPageCount(exploreNode, treeConfig.maxLeavesPerView)
         : 1,
-    [exploreNode, mode],
+    [exploreNode, mode, treeConfig.maxLeavesPerView],
   );
 
   const maxDepth = Math.max(...fullNodes.map((node) => node.depth), 0);
@@ -159,7 +168,7 @@ export function SkillTree() {
           currentHighlight,
           fullNodes,
           skillTree,
-          skillTreeConfig,
+          treeConfig,
         );
         const group = nodeRefs.current.get(node.id);
         const edge = edgeRefs.current.get(node.id);
@@ -235,7 +244,7 @@ export function SkillTree() {
                 currentHighlight,
                 fullNodes,
                 skillTree,
-                skillTreeConfig,
+                treeConfig,
               )
             : 1;
           const edgeLocal =
@@ -321,26 +330,71 @@ export function SkillTree() {
       const highlight = scrollHighlightCategoryId(
         fullNodes,
         scrollProgress,
-        skillTreeConfig,
+        treeConfig,
       );
       setHighlightId(highlight);
       highlightIdRef.current = highlight;
       applyCamera(
         computeOverviewCamera(
           fullNodes,
-          skillTreeConfig,
+          treeConfig,
           VIEW_W,
           VIEW_H,
         ),
       );
       updateNodeLayers(revealProgress);
     },
-    [applyCamera, fullNodes, updateNodeLayers],
+    [applyCamera, fullNodes, treeConfig, updateNodeLayers],
   );
+
+  const refreshCamera = useCallback(() => {
+    if (cameraAnimatingRef.current) {
+      return;
+    }
+
+    if (modeRef.current === "explore") {
+      applyCamera(
+        computeExploreCamera(
+          fullNodes,
+          exploreIdRef.current,
+          explorePageRef.current,
+          treeConfig,
+          VIEW_W,
+          VIEW_H,
+          skillTree,
+        ),
+      );
+      updateNodeLayers(1);
+      return;
+    }
+
+    const section = document.querySelector<HTMLElement>('[data-chapter="skills"]');
+    const progress =
+      section && isInSkillsStickyRange(section)
+        ? readSkillsChapterScroll(section).progress
+        : 0;
+    applyOverviewView(progress);
+  }, [applyCamera, applyOverviewView, fullNodes, treeConfig, updateNodeLayers]);
+
+  useEffect(() => {
+    const onLayoutChange = () => refreshCamera();
+
+    const board = skillBoardRef.current;
+    const observer = board ? new ResizeObserver(onLayoutChange) : null;
+    if (board) {
+      observer?.observe(board);
+    }
+    window.addEventListener("resize", onLayoutChange);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", onLayoutChange);
+    };
+  }, [refreshCamera]);
 
   useEffect(() => {
     const section = document.querySelector<HTMLElement>('[data-chapter="skills"]');
-    syncSkillsChapterHeight(section);
+    syncSkillsChapterHeight(section, false);
   }, []);
 
   useLayoutEffect(() => {
@@ -362,7 +416,7 @@ export function SkillTree() {
         mode === "overview"
           ? computeOverviewCamera(
               fullNodes,
-              skillTreeConfig,
+              treeConfig,
               VIEW_W,
               VIEW_H,
             )
@@ -370,7 +424,7 @@ export function SkillTree() {
               fullNodes,
               exploreId,
               explorePage,
-              skillTreeConfig,
+              treeConfig,
               VIEW_W,
               VIEW_H,
               skillTree,
@@ -425,7 +479,7 @@ export function SkillTree() {
         : 0;
 
     animateCameraTo(
-      computeOverviewCamera(fullNodes, skillTreeConfig, VIEW_W, VIEW_H),
+      computeOverviewCamera(fullNodes, treeConfig, VIEW_W, VIEW_H),
       () => applyOverviewView(progress),
     );
   }, [animateCameraTo, applyOverviewView, fullNodes]);
@@ -450,7 +504,7 @@ export function SkillTree() {
         fullNodes,
         id,
         0,
-        skillTreeConfig,
+        treeConfig,
         VIEW_W,
         VIEW_H,
         skillTree,
@@ -485,7 +539,7 @@ export function SkillTree() {
           fullNodes,
           exploreId,
           index,
-          skillTreeConfig,
+          treeConfig,
           VIEW_W,
           VIEW_H,
           skillTree,
@@ -558,7 +612,7 @@ export function SkillTree() {
 
   return (
     <ChapterStage id="skills" index="04" title="Skills">
-      <div className="skill-board">
+      <div className="skill-board" ref={skillBoardRef}>
         {mode === "overview" && showHint && !reducedMotion ? (
           <p className="skill-hint">Kategorie anklicken zum Vergrössern</p>
         ) : null}
@@ -687,6 +741,15 @@ export function SkillTree() {
                 tabIndex={isNodeInteractive(node) ? 0 : -1}
                 aria-label={node.label}
               >
+                {isNodeInteractive(node) ? (
+                  <circle
+                    className="skill-node-hit"
+                    cx={node.x}
+                    cy={node.y}
+                    r={node.nodeRadius + 8}
+                    fill="transparent"
+                  />
+                ) : null}
                 <circle
                   className="skill-node-core"
                   cx={node.x}

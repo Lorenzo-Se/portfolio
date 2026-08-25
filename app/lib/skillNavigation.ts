@@ -1,7 +1,7 @@
 import { skillTreeConfig } from "@/app/data/skills";
 
-export function skillsScrollTrack(): number {
-  return skillTreeConfig.chapterScrollExtra;
+export function skillsScrollTrack(mobile = false): number {
+  return mobile ? 0 : skillTreeConfig.chapterScrollExtra;
 }
 
 export function isInSkillsStickyRange(section: HTMLElement | null): boolean {
@@ -25,9 +25,14 @@ export function readSkillsChapterScroll(section: HTMLElement): {
   return { track, scrolled, progress };
 }
 
-export function syncSkillsChapterHeight(section: HTMLElement | null): void {
+export function syncSkillsChapterHeight(
+  section: HTMLElement | null,
+  mobile = false,
+): void {
   if (!section) {
     return;
   }
-  section.style.minHeight = `calc(100vh + ${skillsScrollTrack()}px)`;
+  const extra = skillsScrollTrack(mobile);
+  section.style.minHeight =
+    extra > 0 ? `calc(100vh + ${extra}px)` : "auto";
 }

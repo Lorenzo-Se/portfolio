@@ -12,6 +12,7 @@ import {
   layoutFlowBranches,
   layoutFlowTrunk,
   readCareerProgress,
+  syncCareerLayoutConfig,
   trackStroke,
   yearTicks,
   yOf,
@@ -25,9 +26,11 @@ export function CareerFlow() {
   const playheadDotRef = useRef<SVGCircleElement>(null);
   const branchRefs = useRef<Map<string, SVGGElement>>(new Map());
   const activeKeyRef = useRef("");
-  const branches = useMemo(() => layoutFlowBranches(), []);
-  const trunk = useMemo(() => layoutFlowTrunk(), []);
-  const years = useMemo(() => yearTicks(), []);
+  const [layoutKey, setLayoutKey] = useState(0);
+
+  const branches = useMemo(() => layoutFlowBranches(), [layoutKey]);
+  const trunk = useMemo(() => layoutFlowTrunk(), [layoutKey]);
+  const years = useMemo(() => yearTicks(), [layoutKey]);
   const initialPlayY = yOf(TIMELINE_START);
   const [activeBranches, setActiveBranches] = useState(() =>
     activeBranchesAtY(initialPlayY, branches),
@@ -35,11 +38,23 @@ export function CareerFlow() {
   const playheadEndX = CAREER_CARD.left - 8;
 
   useEffect(() => {
+    const syncLayout = () => {
+      if (syncCareerLayoutConfig(window.innerWidth)) {
+        setLayoutKey((current) => current + 1);
+      }
+    };
+
+    syncLayout();
+    window.addEventListener("resize", syncLayout);
+    return () => window.removeEventListener("resize", syncLayout);
+  }, []);
+
+  useEffect(() => {
     const section = document.querySelector<HTMLElement>('[data-chapter="career"]');
     if (section) {
       section.style.minHeight = `calc(100vh + ${careerScrollTrack()}px)`;
     }
-  }, []);
+  }, [layoutKey]);
 
   useEffect(() => {
     const startY = yOf(TIMELINE_START);
@@ -77,12 +92,13 @@ export function CareerFlow() {
   return (
     <ChapterStage id="career" index="02" title="Karriereweg">
       <div className="career-board">
-        <svg
-          className="career-svg"
-          viewBox={`0 0 ${CAREER_VIEW.width} 640`}
-          role="img"
-          aria-label="Karrierefluss mit verzweigender Zeitlinie"
-        >
+        <div className="career-timeline">
+          <svg
+            className="career-svg"
+            viewBox={`0 0 ${CAREER_VIEW.width} 640`}
+            role="img"
+            aria-label="Karrierefluss mit verzweigender Zeitlinie"
+          >
           <g ref={groupRef}>
             {years.map((tick) => (
               <g key={tick.year}>
@@ -177,6 +193,7 @@ export function CareerFlow() {
             />
           </g>
         </svg>
+        </div>
         <CareerActivityCard active={activeBranches} />
       </div>
     </ChapterStage>

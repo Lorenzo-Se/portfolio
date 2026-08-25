@@ -13,16 +13,24 @@ import { useReducedMotion } from "@/app/lib/reducedMotion";
 import { ProjectModal } from "@/app/components/projects/ProjectModal";
 import { ChapterStage } from "@/app/components/ui/ChapterStage";
 
-const CARD_SPREAD = 265;
+const MAX_CARD_SPREAD = 265;
+
+function cardSpreadForBoard(board: HTMLDivElement | null): number {
+  if (!board) {
+    return MAX_CARD_SPREAD;
+  }
+  return Math.min(MAX_CARD_SPREAD, board.clientWidth * 0.38);
+}
 
 function applyCoverflowLayout(
   board: HTMLDivElement | null,
   position: number,
+  cardSpread: number,
 ) {
   const cards = board?.querySelectorAll<HTMLElement>("[data-card]");
   cards?.forEach((card, index) => {
     const delta = index - position;
-    const x = delta * CARD_SPREAD;
+    const x = delta * cardSpread;
     const rot = Math.max(-62, Math.min(62, delta * -42));
     const z = -Math.abs(delta) * 170;
     const scale = 1 - Math.min(Math.abs(delta) * 0.16, 0.42);
@@ -76,13 +84,36 @@ export function ProjectCoverflow() {
   const lastFocusedCardRef = useRef<HTMLElement | null>(null);
   const positionRef = useRef(0);
   const lockedPositionRef = useRef<number | null>(null);
+  const cardSpreadRef = useRef(MAX_CARD_SPREAD);
   const snapTweenRef = useRef<gsap.core.Tween | null>(null);
   const snappingRef = useRef(false);
+  const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const [active, setActive] = useState(0);
   const [openProject, setOpenProject] = useState<Project | null>(null);
   const [originRect, setOriginRect] = useState<DOMRect | null>(null);
   const reducedMotion = useReducedMotion();
   const activeProject = projects[active];
+
+  const relayout = useCallback(() => {
+    const board = boardRef.current;
+    if (!board) {
+      return;
+    }
+    cardSpreadRef.current = cardSpreadForBoard(board);
+    applyCoverflowLayout(board, positionRef.current, cardSpreadRef.current);
+  }, []);
+
+  useEffect(() => {
+    const board = boardRef.current;
+    if (!board) {
+      return;
+    }
+
+    relayout();
+    const observer = new ResizeObserver(relayout);
+    observer.observe(board);
+    return () => observer.disconnect();
+  }, [relayout]);
 
   useEffect(() => {
     return onScrollFrame((state) => {
@@ -100,7 +131,11 @@ export function ProjectCoverflow() {
         projects.length,
       );
       setActive((current) => (current === nextActive ? current : nextActive));
-      applyCoverflowLayout(boardRef.current, position);
+      applyCoverflowLayout(
+        boardRef.current,
+        position,
+        cardSpreadRef.current,
+      );
     });
   }, [openProject]);
 
@@ -116,7 +151,11 @@ export function ProjectCoverflow() {
     (index: number, project: Project, card: HTMLElement) => {
       positionRef.current = index;
       lockedPositionRef.current = index;
-      applyCoverflowLayout(boardRef.current, index);
+      applyCoverflowLayout(
+        boardRef.current,
+        index,
+        cardSpreadRef.current,
+      );
       setActive(index);
 
       const rect = card.getBoundingClientRect();
@@ -161,7 +200,11 @@ export function ProjectCoverflow() {
       ease: "power3.inOut",
       onUpdate: () => {
         positionRef.current = proxy.pos;
-        applyCoverflowLayout(boardRef.current, proxy.pos);
+        applyCoverflowLayout(
+          boardRef.current,
+          proxy.pos,
+          cardSpreadRef.current,
+        );
       },
       onComplete: () => {
         const element = cardRefs.current.get(project.id) ?? card;
@@ -213,9 +256,42 @@ export function ProjectCoverflow() {
 
   function handleBoardPointerLeave() {
     const board = boardRef.current;
+    swipeStartRef.current = null;
     if (board) {
       board.style.cursor = "";
     }
+  }
+
+  function handleBoardPointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    swipeStartRef.current = { x: event.clientX, y: event.clientY };
+  }
+
+  function handleBoardPointerUp(event: React.PointerEvent<HTMLDivElement>) {
+    const start = swipeStartRef.current;
+    swipeStartRef.current = null;
+
+    if (!start || openProject || snappingRef.current) {
+      return;
+    }
+
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+
+    if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.2) {
+      return;
+    }
+
+    const direction = dx < 0 ? 1 : -1;
+    const nextIndex = Math.min(
+      Math.max(active + direction, 0),
+      projects.length - 1,
+    );
+
+    if (nextIndex === active) {
+      return;
+    }
+
+    scrollToProjectIndex(nextIndex);
   }
 
   return (
@@ -228,6 +304,8 @@ export function ProjectCoverflow() {
         aria-activedescendant={`project-${activeProject?.id}`}
         tabIndex={0}
         onClick={handleBoardClick}
+        onPointerDown={handleBoardPointerDown}
+        onPointerUp={handleBoardPointerUp}
         onPointerMove={handleBoardPointerMove}
         onPointerLeave={handleBoardPointerLeave}
         onKeyDown={(event) => {

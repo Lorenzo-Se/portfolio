@@ -1,13 +1,32 @@
 import { projects } from "@/app/data/projects";
 import { getScrollState } from "@/app/lib/chapterProgress";
+import { MOBILE_MAX } from "@/app/lib/breakpoints";
 import { getLenis } from "@/app/lib/usePortfolioScroll";
 
+function projectViewportWidth(width?: number): number {
+  if (width !== undefined) {
+    return width;
+  }
+  if (typeof window === "undefined") {
+    return MOBILE_MAX + 1;
+  }
+  return window.innerWidth;
+}
+
 export const PROJECTS_SCROLL_STEP = 520;
+export const PROJECTS_SCROLL_STEP_MOBILE = 420;
+
+export function projectsScrollStep(width?: number): number {
+  return projectViewportWidth(width) <= MOBILE_MAX
+    ? PROJECTS_SCROLL_STEP_MOBILE
+    : PROJECTS_SCROLL_STEP;
+}
 
 export function projectsScrollTrack(
   projectCount: number = projects.length,
+  width?: number,
 ): number {
-  return Math.max(projectCount - 1, 1) * PROJECTS_SCROLL_STEP;
+  return Math.max(projectCount - 1, 1) * projectsScrollStep(width);
 }
 
 export function projectProgressFromIndex(

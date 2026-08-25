@@ -14,6 +14,8 @@ import {
 import {
   syncSkillsChapterHeight,
 } from "@/app/lib/skillNavigation";
+import { syncCareerLayoutConfig } from "@/app/lib/careerLayout";
+import { isMobileViewport } from "@/app/lib/breakpoints";
 import { projects } from "@/app/data/projects";
 import { gsap, ScrollTrigger } from "@/app/lib/gsap";
 
@@ -163,7 +165,8 @@ export function usePortfolioScroll(
       const lenis = new Lenis({
         lerp: 0.1,
         smoothWheel: true,
-        syncTouch: false,
+        syncTouch: true,
+        touchMultiplier: 1.35,
       });
       lenis.options.virtualScroll = (data) => {
         const { deltaX, deltaY, event } = data;
@@ -212,6 +215,7 @@ export function usePortfolioScroll(
       syncProjectSnaps();
       syncSkillsChapterHeight(
         root.querySelector<HTMLElement>('[data-chapter="skills"]'),
+        isMobileViewport(),
       );
       syncChapterSnapPoints();
       lenis.on("scroll", () => {
@@ -228,6 +232,7 @@ export function usePortfolioScroll(
       syncProjectSnaps();
       syncSkillsChapterHeight(
         root.querySelector<HTMLElement>('[data-chapter="skills"]'),
+        isMobileViewport(),
       );
       sections.forEach((section) => section.style.setProperty("--p", "1"));
       publishScrollState({
@@ -238,10 +243,12 @@ export function usePortfolioScroll(
     }
 
     const onResize = () => {
+      syncCareerLayoutConfig(window.innerWidth);
       ScrollTrigger.refresh();
       syncProjectSnaps();
       syncSkillsChapterHeight(
         root.querySelector<HTMLElement>('[data-chapter="skills"]'),
+        isMobileViewport(),
       );
       syncChapterSnapPoints();
       measure();
@@ -256,6 +263,7 @@ export function usePortfolioScroll(
       syncProjectSnaps();
       syncSkillsChapterHeight(
         root.querySelector<HTMLElement>('[data-chapter="skills"]'),
+        isMobileViewport(),
       );
       syncChapterSnapPoints();
       syncProjectSnapState();

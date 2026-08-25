@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { Project } from "@/app/data/projects";
+import { isPhoneViewport } from "@/app/lib/breakpoints";
 import { gsap } from "@/app/lib/gsap";
 import { getLenis } from "@/app/lib/usePortfolioScroll";
 
@@ -15,6 +16,10 @@ type ProjectModalProps = {
 };
 
 function modalTargetRect(): DOMRect {
+  if (isPhoneViewport()) {
+    return new DOMRect(0, 0, window.innerWidth, window.innerHeight);
+  }
+
   const width = Math.min(window.innerWidth * 0.92, 760);
   const height = Math.min(window.innerHeight * 0.88, 640);
   const left = (window.innerWidth - width) / 2;
