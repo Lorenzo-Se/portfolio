@@ -95,7 +95,7 @@ export const careerSpans: CareerSpan[] = [
   {
     id: "work-1",
     trackId: "work",
-    label: "ThreeCode GmbH",
+    label: "ThreeCode Development KLG",
     route: "branch",
     branchSide: "right",
     branchLane: 1,
