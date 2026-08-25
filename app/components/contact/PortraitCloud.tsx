@@ -1,83 +1,109 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { AdaptiveDpr } from "@react-three/drei";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import {
-  fallbackCloud,
-  samplePortrait,
-  type PortraitSample,
-} from "@/app/lib/samplePortrait";
-import { cinematicDpr } from "@/app/lib/reducedMotion";
+  buildPointSizes,
+  createHeroCloudMaterial,
+  createSoftSpriteMap,
+  heroPixelRatio,
+  heroPointCount,
+} from "@/app/lib/heroCloudMaterial";
+import { fallbackCloud, PORTRAIT_GLB_FIT, sampleGlb } from "@/app/lib/sampleGlb";
+import { samplePortrait } from "@/app/lib/samplePortrait";
+import type { PortraitSample } from "@/app/lib/samplePortrait";
 
+const MESH_SRC = "/portrait-mesh.glb";
 const PORTRAIT_SRC = "/portrait.png";
 
-function CloudMesh({
-  sample,
-  hovered,
-}: {
-  sample: PortraitSample;
-  hovered: boolean;
-}) {
-  const points = useRef<THREE.Points>(null);
-  const hover = useRef(0);
-  const lastHover = useRef(-1);
-  const geometry = useMemo(() => {
-    const geom = new THREE.BufferGeometry();
-    geom.setAttribute(
-      "position",
-      new THREE.BufferAttribute(sample.positions.slice(), 3),
-    );
-    geom.setAttribute("color", new THREE.BufferAttribute(sample.colors, 3));
-    geom.setAttribute(
-      "rest",
-      new THREE.BufferAttribute(sample.positions.slice(), 3),
-    );
-    return geom;
-  }, [sample]);
+const HOME_CAMERA = { x: 0, y: 0, z: 2.6 };
+const RESET_COMPLETE_THRESHOLD = 0.97;
+const PORTRAIT_CAMERA_FOV = 36;
 
-  useFrame((_, delta) => {
-    const cloud = points.current;
-    if (!cloud) {
-      return;
-    }
-    hover.current = THREE.MathUtils.damp(
-      hover.current,
-      hovered ? 1 : 0,
-      4.2,
-      delta,
-    );
-    if (Math.abs(hover.current - lastHover.current) > 0.001) {
-      const positions = cloud.geometry.getAttribute("position");
-      const rest = cloud.geometry.getAttribute("rest");
-      for (let i = 0; i < positions.count; i += 1) {
-        const z = THREE.MathUtils.lerp(rest.getZ(i), 0.02, hover.current);
-        positions.setZ(i, z);
-      }
-      positions.needsUpdate = true;
-      lastHover.current = hover.current;
-    }
-    if (hovered) {
-      cloud.rotation.y = THREE.MathUtils.damp(cloud.rotation.y, 0, 4, delta);
-    } else {
-      cloud.rotation.y += delta * 0.16;
-    }
-    const material = cloud.material as THREE.PointsMaterial;
-    material.opacity = 1 - hover.current * 0.78;
-  });
+type Pointer = { x: number; y: number };
+type HoverStage = "idle" | "resetting" | "revealing" | "photo";
 
-  return (
-    <points ref={points} geometry={geometry}>
-      <pointsMaterial
-        size={0.028}
-        vertexColors
-        transparent
-        depthWrite={false}
-        sizeAttenuation
-      />
-    </points>
+type PortraitCloudState = {
+  scene: THREE.Scene;
+  camera: THREE.PerspectiveCamera;
+  renderer: THREE.WebGLRenderer;
+  points: THREE.Points;
+  material: THREE.ShaderMaterial;
+  spriteMap: THREE.CanvasTexture;
+  time: number;
+};
+
+function normalizeAngle(angle: number) {
+  return THREE.MathUtils.euclideanModulo(angle + Math.PI, Math.PI * 2) - Math.PI;
+}
+
+function lerpAngle(current: number, target: number, alpha: number) {
+  return current + normalizeAngle(target - current) * alpha;
+}
+
+function buildPortraitCloud(
+  host: HTMLElement,
+  sample: PortraitSample,
+): PortraitCloudState {
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(PORTRAIT_CAMERA_FOV, 1, 0.1, 20);
+  camera.position.set(0, 0, HOME_CAMERA.z);
+
+  const rest = sample.positions.slice();
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.BufferAttribute(rest.slice(), 3));
+  geometry.setAttribute("aRest", new THREE.BufferAttribute(rest, 3));
+  geometry.setAttribute("color", new THREE.BufferAttribute(sample.colors, 3));
+  geometry.setAttribute(
+    "aSize",
+    new THREE.BufferAttribute(buildPointSizes(sample.count), 1),
   );
+  geometry.computeBoundingSphere();
+
+  const spriteMap = createSoftSpriteMap();
+  const material = createHeroCloudMaterial(spriteMap);
+
+  const points = new THREE.Points(geometry, material);
+  points.frustumCulled = false;
+  scene.add(points);
+
+  const renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: true,
+    powerPreference: "high-performance",
+  });
+  renderer.setClearColor(0x000000, 0);
+  const canvas = renderer.domElement;
+  canvas.style.display = "block";
+  canvas.style.width = "100%";
+  canvas.style.height = "100%";
+  host.appendChild(canvas);
+
+  return {
+    scene,
+    camera,
+    renderer,
+    points,
+    material,
+    spriteMap,
+    time: 0,
+  };
+}
+
+function resizePortraitCloud(state: PortraitCloudState, width: number, height: number) {
+  if (width < 8 || height < 8) return;
+  state.renderer.setPixelRatio(heroPixelRatio());
+  state.renderer.setSize(width, height, false);
+  state.camera.aspect = width / height;
+  state.camera.updateProjectionMatrix();
+}
+
+function disposePortraitCloud(state: PortraitCloudState) {
+  state.renderer.domElement.remove();
+  state.points.geometry.dispose();
+  state.material.dispose();
+  state.spriteMap.dispose();
+  state.renderer.dispose();
 }
 
 type PortraitCloudProps = {
@@ -85,85 +111,306 @@ type PortraitCloudProps = {
 };
 
 export function PortraitCloud({ reduced }: PortraitCloudProps) {
-  const photoRef = useRef<HTMLImageElement>(null);
-  const hintRef = useRef<HTMLParagraphElement>(null);
-  const [sample, setSample] = useState<PortraitSample | null>(null);
-  const [hovered, setHovered] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const canvasHostRef = useRef<HTMLDivElement>(null);
+  const photoLayerRef = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false);
   const [missing, setMissing] = useState(false);
+  const [photoActive, setPhotoActive] = useState(false);
 
-  useEffect(() => {
-    let ignore = false;
-    samplePortrait(PORTRAIT_SRC)
-      .then((result) => {
-        if (ignore) {
-          return;
-        }
-        if (result) {
-          setSample(result);
-          setMissing(false);
-        } else {
-          setSample(fallbackCloud());
-          setMissing(true);
-        }
-      })
-      .catch(() => {
-        if (!ignore) {
-          setSample(fallbackCloud());
-          setMissing(true);
-        }
-      });
-    return () => {
-      ignore = true;
+  const hoverStageRef = useRef<HoverStage>("idle");
+  const pointerRef = useRef<Pointer>({ x: 0, y: 0 });
+  const pointerTargetRef = useRef<Pointer>({ x: 0, y: 0 });
+  const revealRef = useRef(0);
+  const photoActiveRef = useRef(false);
+  const spinAngleRef = useRef(0);
+
+  const updatePointer = useCallback((clientX: number, clientY: number) => {
+    const root = rootRef.current;
+    if (!root) return;
+
+    const rect = root.getBoundingClientRect();
+    const next = {
+      x: ((clientX - rect.left) / rect.width) * 2 - 1,
+      y: -(((clientY - rect.top) / rect.height) * 2 - 1),
     };
+    pointerTargetRef.current = next;
+    if (hoverStageRef.current === "idle") {
+      pointerRef.current = next;
+    }
+  }, []);
+
+  const beginHoverSequence = useCallback(() => {
+    if (hoverStageRef.current === "idle") {
+      hoverStageRef.current = "resetting";
+      pointerTargetRef.current = { x: 0, y: 0 };
+    }
+  }, []);
+
+  const endHoverSequence = useCallback(() => {
+    hoverStageRef.current = "idle";
+    pointerRef.current = { x: 0, y: 0 };
+    pointerTargetRef.current = { x: 0, y: 0 };
+    photoActiveRef.current = false;
+    setPhotoActive(false);
   }, []);
 
   useEffect(() => {
-    const photo = photoRef.current;
-    if (photo) {
-      photo.style.opacity = hovered && !missing ? "0.92" : "0";
+    const host = canvasHostRef.current;
+    if (!host || reduced) return;
+
+    let disposed = false;
+    let frameId = 0;
+    let cloud: PortraitCloudState | null = null;
+    let cleanupMount: (() => void) | undefined;
+    let pageHidden = document.hidden;
+
+    const onVisibility = () => {
+      pageHidden = document.hidden;
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    const getResetProgress = () => {
+      if (!cloud) return 0;
+      const rotDist = Math.hypot(cloud.points.rotation.x, cloud.points.rotation.y);
+      const camDist = Math.hypot(
+        cloud.camera.position.x - HOME_CAMERA.x,
+        cloud.camera.position.y - HOME_CAMERA.y,
+      );
+      const spinDist = Math.abs(spinAngleRef.current);
+      return (
+        1 -
+        Math.max(
+          Math.min(1, rotDist / 0.22),
+          Math.min(1, camDist / 0.16),
+          Math.min(1, spinDist / 0.15),
+        )
+      );
+    };
+
+    const mount = (sample: PortraitSample) => {
+      if (disposed) return;
+
+      cloud = buildPortraitCloud(host, sample);
+      setReady(true);
+
+      const resize = () => {
+        if (!cloud) return;
+        resizePortraitCloud(cloud, host.clientWidth, host.clientHeight);
+      };
+
+      resize();
+      const resizeObserver = new ResizeObserver(resize);
+      resizeObserver.observe(host);
+
+      const clock = new THREE.Clock();
+
+      const animate = () => {
+        frameId = window.requestAnimationFrame(animate);
+        if (!cloud || pageHidden) return;
+
+        const delta = clock.getDelta();
+        const elapsed = clock.getElapsedTime();
+        const stage = hoverStageRef.current;
+        const pointer = pointerRef.current;
+        const pointsGroup = cloud.points;
+
+        cloud.time += delta;
+        cloud.material.uniforms.uTime.value = cloud.time;
+
+        if (stage === "idle") {
+          const depthStrength = 0.22;
+          const tiltX = pointer.y * depthStrength;
+          const tiltY = pointer.x * depthStrength;
+
+          spinAngleRef.current = normalizeAngle(spinAngleRef.current + delta * 0.05);
+          const targetY = normalizeAngle(tiltY + spinAngleRef.current);
+          const targetX = tiltX + Math.sin(elapsed * 0.55) * 0.03;
+          pointsGroup.rotation.y = lerpAngle(pointsGroup.rotation.y, targetY, 0.08);
+          pointsGroup.rotation.x = lerpAngle(pointsGroup.rotation.x, targetX, 0.08);
+
+          cloud.camera.position.x = THREE.MathUtils.lerp(
+            cloud.camera.position.x,
+            pointer.x * 0.14,
+            0.1,
+          );
+          cloud.camera.position.y = THREE.MathUtils.lerp(
+            cloud.camera.position.y,
+            pointer.y * 0.12,
+            0.1,
+          );
+          revealRef.current = THREE.MathUtils.lerp(revealRef.current, 0, 0.12);
+        } else {
+          spinAngleRef.current = lerpAngle(spinAngleRef.current, 0, 0.12);
+          pointsGroup.rotation.x = lerpAngle(pointsGroup.rotation.x, 0, 0.12);
+          pointsGroup.rotation.y = lerpAngle(pointsGroup.rotation.y, 0, 0.12);
+          pointsGroup.rotation.z = lerpAngle(pointsGroup.rotation.z, 0, 0.12);
+
+          pointerRef.current.x = THREE.MathUtils.lerp(pointerRef.current.x, 0, 0.16);
+          pointerRef.current.y = THREE.MathUtils.lerp(pointerRef.current.y, 0, 0.16);
+          cloud.camera.position.x = THREE.MathUtils.lerp(
+            cloud.camera.position.x,
+            HOME_CAMERA.x,
+            0.14,
+          );
+          cloud.camera.position.y = THREE.MathUtils.lerp(
+            cloud.camera.position.y,
+            HOME_CAMERA.y,
+            0.14,
+          );
+
+          const resetProgress = getResetProgress();
+
+          if (stage === "resetting" && resetProgress >= RESET_COMPLETE_THRESHOLD) {
+            hoverStageRef.current = "revealing";
+          }
+
+          if (stage === "revealing" || stage === "photo") {
+            revealRef.current = THREE.MathUtils.lerp(revealRef.current, 1, 0.2);
+            if (revealRef.current > 0.96) {
+              hoverStageRef.current = "photo";
+            }
+          }
+        }
+
+        cloud.camera.position.z = HOME_CAMERA.z;
+        cloud.camera.lookAt(0, 0, 0);
+
+        const reveal = revealRef.current;
+        cloud.material.opacity = THREE.MathUtils.lerp(0.92, 0, reveal);
+        cloud.renderer.domElement.style.opacity = String(THREE.MathUtils.lerp(1, 0, reveal));
+
+        if (photoLayerRef.current) {
+          photoLayerRef.current.style.opacity = String(reveal);
+          photoLayerRef.current.style.transform = `perspective(900px) rotateX(${-pointerRef.current.y * reveal * 5}deg) rotateY(${pointerRef.current.x * reveal * 5}deg) scale(${1 + reveal * 0.02})`;
+          photoLayerRef.current.style.pointerEvents = reveal > 0.85 ? "auto" : "none";
+        }
+
+        const isPhotoActive = reveal > 0.85;
+        if (isPhotoActive !== photoActiveRef.current) {
+          photoActiveRef.current = isPhotoActive;
+          setPhotoActive(isPhotoActive);
+        }
+
+        cloud.renderer.render(cloud.scene, cloud.camera);
+      };
+
+      animate();
+
+      return () => {
+        resizeObserver.disconnect();
+        window.cancelAnimationFrame(frameId);
+        if (cloud) {
+          disposePortraitCloud(cloud);
+        }
+        cloud = null;
+      };
+    };
+
+    const pointCount = heroPointCount();
+
+    sampleGlb(MESH_SRC, pointCount, PORTRAIT_GLB_FIT)
+      .then((result) => {
+        if (disposed) return;
+        if (result) {
+          setMissing(false);
+          cleanupMount = mount(result);
+          return;
+        }
+        return samplePortrait(PORTRAIT_SRC, pointCount).then((pngResult) => {
+          if (disposed) return;
+          if (pngResult) {
+            setMissing(false);
+            cleanupMount = mount(pngResult);
+          } else {
+            setMissing(true);
+            cleanupMount = mount(fallbackCloud(pointCount));
+          }
+        });
+      })
+      .catch(() => {
+        if (disposed) return;
+        setMissing(true);
+        cleanupMount = mount(fallbackCloud(pointCount));
+      });
+
+    return () => {
+      disposed = true;
+      document.removeEventListener("visibilitychange", onVisibility);
+      cleanupMount?.();
+      cloud = null;
+      setReady(false);
+    };
+  }, [reduced]);
+
+  const handleClick = () => {
+    if (window.matchMedia("(hover: none)").matches) {
+      beginHoverSequence();
     }
-    if (hintRef.current) {
-      hintRef.current.style.opacity = hovered ? "0" : "1";
-    }
-  }, [hovered, missing]);
+  };
+
+  if (reduced) {
+    return (
+      <div
+        className="portrait-frame portrait-frame--static"
+        role="img"
+        aria-label="Profilfoto Lorenzo Seminara"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={PORTRAIT_SRC}
+          alt="Lorenzo Seminara"
+          className="portrait-photo"
+        />
+      </div>
+    );
+  }
 
   return (
     <div
+      ref={rootRef}
       className="portrait-frame"
-      onPointerEnter={() => setHovered(true)}
-      onPointerLeave={() => setHovered(false)}
+      onMouseEnter={beginHoverSequence}
+      onMouseLeave={endHoverSequence}
+      onMouseMove={(event) => updatePointer(event.clientX, event.clientY)}
+      onClick={handleClick}
+      onFocus={beginHoverSequence}
+      onBlur={endHoverSequence}
+      tabIndex={0}
+      role="button"
+      aria-label={
+        photoActive
+          ? "Profilfoto — Foto angezeigt"
+          : "Profil-Scan — bei Hover Foto anzeigen"
+      }
     >
-      {!reduced && sample ? (
-        <Canvas
-          dpr={[1, cinematicDpr()]}
-          camera={{ position: [0, 0, 3.1], fov: 42 }}
-          gl={{ antialias: true, alpha: true }}
-        >
-          <AdaptiveDpr pixelated />
-          <CloudMesh sample={sample} hovered={hovered} />
-        </Canvas>
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={PORTRAIT_SRC}
-          alt=""
-          className="portrait-photo"
-          style={{ opacity: reduced ? 1 : 0, position: "relative" }}
-        />
-      )}
+      <div
+        ref={canvasHostRef}
+        className={`portrait-canvas-host${ready ? " is-ready" : ""}`}
+        aria-hidden="true"
+      />
+
       {!missing ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          ref={photoRef}
-          src={PORTRAIT_SRC}
-          alt="Profilbild"
-          className="portrait-photo"
-        />
+        <div
+          ref={photoLayerRef}
+          className="portrait-photo-layer"
+          aria-hidden={!photoActive}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={PORTRAIT_SRC}
+            alt="Lorenzo Seminara"
+            className="portrait-photo"
+          />
+        </div>
       ) : null}
-      <p ref={hintRef} className="portrait-hint">
+
+      <p className="portrait-hint">
         {missing
-          ? "Lege public/portrait.png ab"
-          : "Hover — das Bild erscheint"}
+          ? "Lege public/portrait-mesh.glb ab"
+          : photoActive
+            ? ""
+            : "Hover — das Bild erscheint"}
       </p>
     </div>
   );

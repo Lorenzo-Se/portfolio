@@ -234,7 +234,7 @@ a {
 }
 
 .chapter[data-chapter="skills"] {
-  min-height: 215vh;
+  min-height: calc(100vh + 320px);
 }
 
 .chapter[data-chapter="contact"] {
@@ -1151,12 +1151,104 @@ a {
   display: grid;
   flex: 1;
   min-height: 0;
-  place-items: center;
+  grid-template-rows: auto auto 1fr;
+  gap: 0.45rem;
+  place-items: stretch;
+  overflow: hidden;
+}
+
+.skill-hint {
+  margin: 0;
+  color: #8d95a8;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+}
+
+.skill-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+}
+
+.skill-breadcrumb-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.skill-breadcrumb-sep {
+  color: rgba(197, 210, 255, 0.35);
+  font-size: 0.75rem;
+}
+
+.skill-breadcrumb-btn {
+  border: none;
+  background: transparent;
+  color: #b8bfd0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.skill-breadcrumb-btn:hover:not(:disabled) {
+  color: var(--yellow-accent);
+}
+
+.skill-breadcrumb-btn:disabled {
+  color: var(--foreground);
+  cursor: default;
+}
+
+.skill-page-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.skill-page-dot {
+  width: 7px;
+  height: 7px;
+  border: 1px solid rgba(197, 210, 255, 0.35);
+  border-radius: 999px;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.skill-page-dot.is-active {
+  border-color: var(--yellow-accent);
+  background: var(--yellow-accent);
+  transform: scale(1.15);
+}
+
+.skill-page-label {
+  color: var(--muted);
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
 }
 
 .skill-svg {
   width: min(1100px, 100%);
   height: 100%;
+  min-height: 360px;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.skill-camera {
+  transform-origin: 0 0;
+  transform-box: fill-box;
 }
 
 .skill-edge {
@@ -1168,6 +1260,30 @@ a {
 .skill-node-core {
   fill: #080c14;
   stroke: rgba(197, 210, 255, 0.28);
+  transition:
+    stroke 0.25s ease,
+    filter 0.25s ease;
+}
+
+.skill-node--branch {
+  cursor: pointer;
+}
+
+.skill-node--branch .skill-node-core {
+  stroke: rgba(197, 210, 255, 0.45);
+}
+
+.skill-node--branch:hover .skill-node-core {
+  stroke: rgba(255, 207, 74, 0.55);
+}
+
+.skill-node.is-peek .skill-node-core {
+  stroke: rgba(197, 210, 255, 0.38);
+}
+
+.skill-node.is-dimmed .skill-label,
+.skill-node.is-dimmed .skill-level {
+  opacity: 0.55;
 }
 
 .skill-node.is-on .skill-node-core {
@@ -1175,9 +1291,18 @@ a {
   filter: drop-shadow(0 0 8px rgba(255, 207, 74, 0.4));
 }
 
+.skill-node.is-category-active .skill-node-core {
+  stroke: var(--yellow-accent);
+  filter: drop-shadow(0 0 10px rgba(255, 207, 74, 0.55));
+}
+
+.skill-node.is-selected .skill-node-core {
+  stroke: var(--yellow-accent);
+  filter: drop-shadow(0 0 12px rgba(255, 207, 74, 0.55));
+}
+
 .skill-label {
   fill: var(--foreground);
-  font-size: 12px;
   font-weight: 700;
 }
 
@@ -1238,12 +1363,41 @@ a {
   overflow: hidden;
   border: 1px solid var(--line);
   background: rgba(8, 12, 20, 0.55);
+  cursor: pointer;
 }
 
-.portrait-frame canvas {
+.portrait-frame:focus-visible {
+  outline: none;
+}
+
+.portrait-frame--static {
+  cursor: default;
+}
+
+.portrait-canvas-host {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 500ms ease-out;
+}
+
+.portrait-canvas-host.is-ready {
+  opacity: 1;
+}
+
+.portrait-canvas-host canvas {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+.portrait-photo-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  opacity: 0;
+  will-change: opacity, transform;
+  pointer-events: none;
 }
 
 .portrait-photo {
@@ -1253,7 +1407,6 @@ a {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0;
   pointer-events: none;
 }
 

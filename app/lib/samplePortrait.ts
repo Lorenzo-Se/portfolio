@@ -20,7 +20,7 @@ export async function samplePortrait(
     return null;
   }
 
-  const targetW = 168;
+  const targetW = Math.min(640, Math.max(320, Math.round(Math.sqrt(maxPoints) * 2.2)));
   const scale = targetW / image.width;
   const w = targetW;
   const h = Math.max(1, Math.round(image.height * scale));

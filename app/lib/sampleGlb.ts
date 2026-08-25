@@ -6,6 +6,24 @@ import type { PortraitSample } from "@/app/lib/samplePortrait";
 const FLOW = { r: 1.0, g: 207 / 255, b: 74 / 255 };
 const FLOW_DIM = { r: 0.82, g: 0.58, b: 0.16 };
 
+export type GlbSampleFit = {
+  maxDimScale: number;
+  offsetX: number;
+  offsetY: number;
+};
+
+export const HERO_GLB_FIT: GlbSampleFit = {
+  maxDimScale: 2.18,
+  offsetX: 0,
+  offsetY: 0,
+};
+
+export const PORTRAIT_GLB_FIT: GlbSampleFit = {
+  maxDimScale: 1.38,
+  offsetX: 0.1,
+  offsetY: -0.1,
+};
+
 function mix(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
@@ -128,6 +146,7 @@ export function fallbackSphere(count = 80_000): PortraitSample {
 export async function sampleGlb(
   src: string,
   maxPoints = 120_000,
+  fit: GlbSampleFit = HERO_GLB_FIT,
 ): Promise<PortraitSample | null> {
   const loader = new GLTFLoader();
   let gltf: Awaited<ReturnType<GLTFLoader["loadAsync"]>>;
@@ -169,7 +188,7 @@ export async function sampleGlb(
   }
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
-  const scale = 2.18 / Math.max(size.x, size.y, size.z, 0.001);
+  const scale = fit.maxDimScale / Math.max(size.x, size.y, size.z, 0.001);
 
   const count = raw.length;
   const positions = new Float32Array(count * 3);
@@ -177,8 +196,8 @@ export async function sampleGlb(
 
   for (let i = 0; i < count; i += 1) {
     const point = raw[i].clone().sub(center).multiplyScalar(scale);
-    positions[i * 3] = point.x;
-    positions[i * 3 + 1] = point.y;
+    positions[i * 3] = point.x + fit.offsetX;
+    positions[i * 3 + 1] = point.y + fit.offsetY;
     positions[i * 3 + 2] = point.z;
 
     const t = THREE.MathUtils.clamp((point.y + 1.2) / 2.4, 0, 1);
