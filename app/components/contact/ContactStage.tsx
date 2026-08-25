@@ -15,8 +15,7 @@ export function ContactStage({ reduced }: ContactStageProps) {
       <div className="contact-stage">
         <div className="contact-copy">
           <p>
-            Platzhalter für eine kurze Abschlusszeile. Ersetze die Links in
-            app/data/contact.ts.
+          Du willst mehr zu meiner Ausbildung, ThreeCode oder einzelnen Projekten hören?
           </p>
           <div className="contact-links">
             <Magnetic>

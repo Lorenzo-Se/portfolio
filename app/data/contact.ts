@@ -1,8 +1,8 @@
 export const contact = {
-  email: "mail@example.com",
-  mailHref: "mailto:mail@example.com",
-  phone: "+41 00 000 00 00",
-  phoneHref: "tel:+41000000000",
-  linkedinHref: "https://www.linkedin.com/in/placeholder/",
+  email: "lorenzo@seminara.ch",
+  mailHref: "mailto:lorenzo@seminara.ch",
+  phone: "+41 77 498 66 03",
+  phoneHref: "tel:+41774986603",
+  linkedinHref: "https://www.linkedin.com/in/lorenzo-seminara/",
   linkedinLabel: "LinkedIn",
 } as const;
