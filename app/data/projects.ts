@@ -80,11 +80,11 @@ export const projects: Project[] = [
   },
   {
     id: "project-f",
-    title: "Securities Manager (work in progress)",
+    title: "Kryptomanager (work in progress)",
     cover: "/projects/securities-manager.png",
-    teaser: "Ein Tool, um Wertpapiere zu verwalten und zu analysieren.",
+    teaser: "Ein Tool, um Kryptowährungen zu verwalten und zu analysieren.",
     description:
-      "Securities Manager ist eine Anwendung zur Verwaltung und Analyse von Wertpapieren. Portfolios, Positionen und Kennzahlen werden zentral erfasst und ausgewertet. Das Projekt ist noch in Entwicklung und verbindet ein Next.js-Frontend mit einer Laravel-API und PostgreSQL als Datenbank.",
+      "Kryptomanager ist eine Anwendung zur Verwaltung und Analyse von Kryptowährungen. Portfolios, Positionen und Kennzahlen werden zentral erfasst und ausgewertet. Das Projekt ist noch in Entwicklung und verbindet ein Next.js-Frontend mit einer Laravel-API und PostgreSQL als Datenbank.",
     year: "2026",
     techStack: ["Next.js", "Shadcn/UI", "REST API", "Laravel", "PostgreSQL"],
     githubUrl: "https://github.com/Lorenzo-Se/securities-manager",
