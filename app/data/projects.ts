@@ -42,7 +42,6 @@ export const projects: Project[] = [
       "MySQL",
       "OSRM",
     ],
-    demoUrl: "https://dev.threerun.ch",
     placeholder: false,
   },
   {
