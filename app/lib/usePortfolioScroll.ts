@@ -11,6 +11,9 @@ import {
   projectsScrollDelta,
   projectsScrollTrack,
 } from "@/app/lib/projectLayout";
+import {
+  syncSkillsChapterHeight,
+} from "@/app/lib/skillNavigation";
 import { projects } from "@/app/data/projects";
 import { gsap, ScrollTrigger } from "@/app/lib/gsap";
 
@@ -104,9 +107,9 @@ export function usePortfolioScroll(
     };
 
     let ticker: ((time: number) => void) | undefined;
-    let projectSnap: Snap | undefined;
+    let chapterSnap: Snap | undefined;
     let snapPausedForProjects = false;
-    const projectSnapRemovers: Array<() => void> = [];
+    const chapterSnapRemovers: Array<() => void> = [];
 
     const syncProjectSnaps = () => {
       const section = root.querySelector<HTMLElement>('[data-chapter="projects"]');
@@ -115,31 +118,43 @@ export function usePortfolioScroll(
       }
 
       section.style.minHeight = `calc(100vh + ${projectsScrollTrack(projects.length)}px)`;
-      if (!projectSnap) {
+    };
+
+    const syncChapterSnapPoints = () => {
+      if (!chapterSnap) {
         return;
       }
 
-      projectSnapRemovers.splice(0).forEach((remove) => remove());
-      projectSnapOffsets(section, projects.length).forEach((offset) => {
-        projectSnapRemovers.push(projectSnap!.add(offset));
-      });
-      projectSnap.resize();
+      chapterSnapRemovers.splice(0).forEach((remove) => remove());
+
+      const projectsSection = root.querySelector<HTMLElement>(
+        '[data-chapter="projects"]',
+      );
+      if (projectsSection) {
+        projectSnapOffsets(projectsSection, projects.length).forEach(
+          (offset) => {
+            chapterSnapRemovers.push(chapterSnap!.add(offset));
+          },
+        );
+      }
+
+      chapterSnap.resize();
     };
 
     const projectsSection = () =>
       root.querySelector<HTMLElement>('[data-chapter="projects"]');
 
     const syncProjectSnapState = () => {
-      if (!projectSnap) {
+      if (!chapterSnap) {
         return;
       }
 
       const inProjects = isInProjectsStickyRange(projectsSection());
       if (inProjects && !snapPausedForProjects) {
-        projectSnap.stop();
+        chapterSnap.stop();
         snapPausedForProjects = true;
       } else if (!inProjects && snapPausedForProjects) {
-        projectSnap.start();
+        chapterSnap.start();
         snapPausedForProjects = false;
       }
     };
@@ -188,13 +203,17 @@ export function usePortfolioScroll(
         return false;
       };
       lenisInstance = lenis;
-      projectSnap = new Snap(lenis, {
+      chapterSnap = new Snap(lenis, {
         type: "proximity",
         distanceThreshold: 120,
         debounce: 420,
         duration: 0.65,
       });
       syncProjectSnaps();
+      syncSkillsChapterHeight(
+        root.querySelector<HTMLElement>('[data-chapter="skills"]'),
+      );
+      syncChapterSnapPoints();
       lenis.on("scroll", () => {
         syncProjectSnapState();
         ScrollTrigger.update();
@@ -207,6 +226,9 @@ export function usePortfolioScroll(
       gsap.ticker.lagSmoothing(0);
     } else {
       syncProjectSnaps();
+      syncSkillsChapterHeight(
+        root.querySelector<HTMLElement>('[data-chapter="skills"]'),
+      );
       sections.forEach((section) => section.style.setProperty("--p", "1"));
       publishScrollState({
         progress: 1,
@@ -218,6 +240,10 @@ export function usePortfolioScroll(
     const onResize = () => {
       ScrollTrigger.refresh();
       syncProjectSnaps();
+      syncSkillsChapterHeight(
+        root.querySelector<HTMLElement>('[data-chapter="skills"]'),
+      );
+      syncChapterSnapPoints();
       measure();
     };
     window.addEventListener("resize", onResize);
@@ -228,6 +254,10 @@ export function usePortfolioScroll(
 
     requestAnimationFrame(() => {
       syncProjectSnaps();
+      syncSkillsChapterHeight(
+        root.querySelector<HTMLElement>('[data-chapter="skills"]'),
+      );
+      syncChapterSnapPoints();
       syncProjectSnapState();
       measure();
       if (hashIndex > 0) {
@@ -246,8 +276,8 @@ export function usePortfolioScroll(
       if (ticker) {
         gsap.ticker.remove(ticker);
       }
-      projectSnapRemovers.forEach((remove) => remove());
-      projectSnap?.destroy();
+      chapterSnapRemovers.forEach((remove) => remove());
+      chapterSnap?.destroy();
       lenisInstance?.destroy();
       lenisInstance = null;
     };

@@ -16,9 +16,10 @@ export const projects: Project[] = [
     id: "project-a",
     title: "myVKAZU",
     cover: "/projects/myVKAZU.png",
-    teaser: "Ein Intranet für den Verein VKAZU. Dies war mein erstes Coding Projekt.",
+    teaser:
+      "Vereins-Intranet für VKAZU — Mitglieder, Abmeldungen und interne Verwaltung an einem Ort. Mein erstes Coding-Projekt.",
     description:
-      "myVKAZU ist ein Intranet für den Verein VKAZU und mein erstes eigenes Coding-Projekt. Die Anwendung bündelt Vereinsinformationen, interne Inhalte und einfache Verwaltungsfunktionen an einem Ort. Dabei habe ich die Grundlagen von Webentwicklung, Datenbankanbindung und dem Aufbau einer nutzbaren Oberfläche gelernt.",
+      "Intranet-Lösung für den Verein VKAZU und Einstieg in die Webentwicklung. Mitglieder werden verwaltet, Abmeldungen erfasst und weitere Vereinsprozesse digital abgebildet. Von der Datenbank bis zur Oberfläche selbst umgesetzt — der Grundstein für spätere Full-Stack-Projekte.",
     year: "2023",
     techStack: ["PHP", "HTML", "Bootstrap"],
     placeholder: false,
@@ -26,9 +27,10 @@ export const projects: Project[] = [
   {
     id: "project-b",
     title: "ThreeRun",
-    teaser: "Eine Website für die Anmeldung und Verwaltung von Langdistanzläufen und Märschen.",
+    teaser:
+      "SaaS-Produkt von Threecode für Langdistanzläufe und Märsche — Online-Anmeldung für Teilnehmer, zentrale Event-Verwaltung für Organisatoren.",
     description:
-      "ThreeRun ist eine Plattform für die Anmeldung und Verwaltung von Langdistanzläufen und Märschen. Organisatoren können Events verwalten, Teilnehmende registrieren sich online, und Strecken werden über OSRM berechnet. Die Anwendung verbindet ein modernes React-Frontend mit einer Laravel-API und nutzt Websockets für Echtzeit-Updates.",
+      "ThreeRun ist ein Produkt von Threecode zur Organisation von Langdistanzläufen und Märschen. Teilnehmende melden sich online an; Organisatoren verwalten Betten, Parkplätze, Teilnehmerlisten und weitere Event-Details aus einer Oberfläche. Streckenberechnung über OSRM, Echtzeit-Updates per WebSocket.",
     cover: "/projects/ThreeRun.png",
     year: "2025",
     techStack: [
@@ -46,9 +48,10 @@ export const projects: Project[] = [
   {
     id: "project-c",
     title: "Youtube Playlist Transcriptions",
-    teaser: "Ein Tool, das die Transkripte von YouTube-Playlists in einem CSV-Format exportiert.",
+    teaser:
+      "Transkripte einer ganzen YouTube-Playlist auf einmal extrahieren — mit Sprach-Fallback und optionaler Sammeldatei.",
     description:
-      "Dieses Python-Tool extrahiert Transkripte aus allen Videos einer YouTube-Playlist und exportiert sie als CSV. Es eignet sich für Recherche, Archivierung oder die Weiterverarbeitung von Inhalten. Der Fokus liegt auf einem einfachen CLI-Workflow und sauber strukturierten Ausgabedaten.",
+      "CLI-Tool für Recherche und Archivierung: liest alle Videos einer Playlist, bevorzugt manuelle Untertitel, fällt auf Auto-Generated zurück und übersetzt bei Bedarf. Pro Video entsteht eine strukturierte TXT-Datei mit Titel, ID, URL und Transkripttext; optional eine kombinierte Ausgabe. Am Ende eine Zusammenfassung erfolgreicher und fehlgeschlagener Videos.",
     year: "2026",
     techStack: ["Python"],
     githubUrl: "https://github.com/Lorenzo-Se/yt-playlist-transcript",
@@ -57,9 +60,10 @@ export const projects: Project[] = [
   {
     id: "project-d",
     title: "Dropbox Diashow",
-    teaser: "Ein Tool, das die Bilder von einem Dropbox-Ordner als Diashow anzeigt.",
+    teaser:
+      "Vollbild-Diashow aus einem öffentlichen Dropbox-Ordner — ohne API-Token, Account oder Hosting.",
     description:
-      "Die Dropbox Diashow zeigt Bilder aus einem freigegebenen Dropbox-Ordner als Vollbild-Diashow im Browser. Ideal für Präsentationen oder private Galerien ohne eigene Bildhosting-Infrastruktur. Frontend und Backend sind bewusst schlank gehalten, damit die Anwendung schnell einsatzbereit ist.",
+      "Fotos aus einem Shared Link werden über einen schlanken lokalen Python-Server geladen und im Browser als Diashow angezeigt. Acht Übergangseffekte, Ken-Burns-Zoom, Vollbild und Tastatursteuerung; neue Bilder im Ordner erscheinen nach konfigurierbarem Intervall automatisch. Start per Doppelklick-Skript — kein Docker, kein eigener Bildhost.",
     year: "2026",
     techStack: ["Python", "HTML", "CSS", "JavaScript"],
     demoUrl: "https://lorenzo-se.github.io/diashow-dropbox/",
@@ -70,9 +74,10 @@ export const projects: Project[] = [
     id: "project-e",
     title: "Raycast Password Manager Extension",
     cover: "/projects/raycast-pwm.png",
-    teaser: "Raycast-Erweiterung, um auf mehrere Passwort-Manager und deren Logins direkt zuzugreifen.",
+    teaser:
+      "Mehrere Passwort-Manager in Raycast vereinen — Einträge suchen, kopieren und direkt in die aktive App einfügen.",
     description:
-      "Diese Raycast-Erweiterung verbindet mehrere Passwort-Manager in einer einheitlichen Oberfläche. Logins lassen sich direkt aus Raycast heraus suchen und öffnen, ohne zwischen Apps zu wechseln. TypeScript bildet die UI-Logik ab, Swift die native Integration mit den jeweiligen Passwort-Managern.",
+      "Raycast-Extension mit einheitlicher Suche über Built-in- und externe CLI-Adapter. Passwort, Benutzername und TOTP lassen sich kopieren oder per Paste in die Vordergrund-App einfügen; Multi-Manager-Umschalter und Session-Lock mit Touch ID (lokal/dev). Erweiterbar über ein Stdio-Protokoll für Third-Party-Adapter — TypeScript für die UI, Swift für die native Biometrie-Integration.",
     year: "2026",
     techStack: ["Typescript", "Swift", "Raycast"],
     githubUrl: "https://github.com/Lorenzo-Se/raycast-pwm",
@@ -80,11 +85,12 @@ export const projects: Project[] = [
   },
   {
     id: "project-f",
-    title: "Kryptomanager (work in progress)",
+    title: "Kryptomanager",
     cover: "/projects/securities-manager.png",
-    teaser: "Ein Tool, um Kryptowährungen zu verwalten und zu analysieren.",
+    teaser:
+      "Krypto-Portfolio selbst pflegen — Positionen erfassen, Gewinn verfolgen und den Überblick über alle Bestände behalten.",
     description:
-      "Kryptomanager ist eine Anwendung zur Verwaltung und Analyse von Kryptowährungen. Portfolios, Positionen und Kennzahlen werden zentral erfasst und ausgewertet. Das Projekt ist noch in Entwicklung und verbindet ein Next.js-Frontend mit einer Laravel-API und PostgreSQL als Datenbank.",
+      "Anwendung zur persönlichen Verwaltung von Kryptowährungen: Bestände manuell eintragen, Gewinne und Verluste auswerten und jederzeit nachvollziehen, wie viel wo liegt. Aktuell noch in Entwicklung.",
     year: "2026",
     techStack: ["Next.js", "Shadcn/UI", "REST API", "Laravel", "PostgreSQL"],
     githubUrl: "https://github.com/Lorenzo-Se/securities-manager",
@@ -94,9 +100,10 @@ export const projects: Project[] = [
     id: "project-g",
     title: "Duck Drift",
     cover: "/projects/duck-drift.png",
-    teaser: "Ein Web-Game, bei dem man die das Handy als Controller nutzt und Renne fährt",
+    teaser:
+      "2D-Rennspiel im Browser: Smartphone als Controller per Neigungssensor, bis zu vier Spieler in einer Lobby.",
     description:
-      "Duck Drift ist ein Multiplayer-Web-Game, bei dem das Smartphone als Controller dient. Spieler steuern über ihr Handy ein Fahrzeug auf dem Bildschirm und treten in Echtzeit gegeneinander an. Websockets und Redis sorgen für niedrige Latenz, Express.js hostet die Spiellogik.",
+      "Hackathon-Projekt (ca. 5 Stunden): Host-Bildschirm rendert das Rennen, Controller verbinden sich per QR-Code und steuern ihre Ente über Neigung und Touch-Buttons. Schlanker Express/WebSocket-Relay-Server ohne Build-Step; Highscores persistent über Redis oder In-Memory-Fallback. Bewusst minimal gehalten — reines HTML/CSS/JS ohne schweres Framework.",
     year: "2026",
     techStack: ["HTML", "CSS", "Express.js", "Websocket", "Redis", "Deplo.io", "Python"],
     demoUrl: "https://server.b206b21.deploio.app/",
@@ -106,9 +113,10 @@ export const projects: Project[] = [
   {
     id: "project-h",
     title: "Portfolio",
-    teaser: "Mein persönliches Portfolio, das ich mit Next.js und Tailwind CSS erstellt habe. Sie befinden sich gerade hier.",
+    teaser:
+      "Scroll-gesteuertes Bewerbungsportfolio mit Projekten, Karriereverlauf und Skill-Tree.",
     description:
-      "Dieses Portfolio präsentiert meine Projekte, meinen Karriereweg und meine Skills in einer scroll-gesteuerten Experience. Next.js und Tailwind CSS bilden die Basis, GSAP und Lenis steuern die Animationen und das Scroll-Verhalten. Du befindest dich gerade auf dieser Seite.",
+      "Persönliches Portfolio als durchgängige Scroll-Experience: Projekte im Coverflow, Karriere als Zeitachse, Skills als interaktiver Baum. Next.js und Tailwind CSS als Basis; GSAP und Lenis für Animationen und sanftes Scroll-Verhalten. Alle Inhalte zentral in `app/data/` gepflegt.",
     year: "2026",
     techStack: ["Next.js", "Tailwind CSS"],
     demoUrl: "https://lorenzo.seminara.ch/",

@@ -1255,6 +1255,8 @@ a {
   fill: none;
   stroke: url(#skill-stroke);
   stroke-width: 1.2;
+  stroke-linecap: round;
+  pointer-events: none;
 }
 
 .skill-node-core {
@@ -1263,6 +1265,10 @@ a {
   transition:
     stroke 0.25s ease,
     filter 0.25s ease;
+}
+
+.skill-level-ring {
+  stroke: rgba(197, 210, 255, 0.45);
 }
 
 .skill-node--branch {
@@ -1289,6 +1295,10 @@ a {
 .skill-node.is-on .skill-node-core {
   stroke: var(--yellow-accent);
   filter: drop-shadow(0 0 8px rgba(255, 207, 74, 0.4));
+}
+
+.skill-node.is-on .skill-level-ring {
+  stroke: rgba(255, 207, 74, 0.88);
 }
 
 .skill-node.is-category-active .skill-node-core {
