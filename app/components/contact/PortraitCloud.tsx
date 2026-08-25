@@ -144,6 +144,7 @@ export function PortraitCloud({ reduced }: PortraitCloudProps) {
     if (hoverStageRef.current === "idle") {
       hoverStageRef.current = "resetting";
       pointerTargetRef.current = { x: 0, y: 0 };
+      spinAngleRef.current = 0;
     }
   }, []);
 
@@ -153,6 +154,7 @@ export function PortraitCloud({ reduced }: PortraitCloudProps) {
     pointerTargetRef.current = { x: 0, y: 0 };
     photoActiveRef.current = false;
     setPhotoActive(false);
+    revealRef.current = 0;
   }, []);
 
   useEffect(() => {
@@ -164,6 +166,7 @@ export function PortraitCloud({ reduced }: PortraitCloudProps) {
     let cloud: PortraitCloudState | null = null;
     let cleanupMount: (() => void) | undefined;
     let pageHidden = document.hidden;
+    let resettingSince = 0;
 
     const onVisibility = () => {
       pageHidden = document.hidden;
@@ -172,18 +175,20 @@ export function PortraitCloud({ reduced }: PortraitCloudProps) {
 
     const getResetProgress = () => {
       if (!cloud) return 0;
-      const rotDist = Math.hypot(cloud.points.rotation.x, cloud.points.rotation.y);
+      const rotDist = Math.hypot(
+        cloud.points.rotation.x,
+        cloud.points.rotation.y,
+        cloud.points.rotation.z,
+      );
       const camDist = Math.hypot(
         cloud.camera.position.x - HOME_CAMERA.x,
         cloud.camera.position.y - HOME_CAMERA.y,
       );
-      const spinDist = Math.abs(spinAngleRef.current);
       return (
         1 -
         Math.max(
           Math.min(1, rotDist / 0.22),
           Math.min(1, camDist / 0.16),
-          Math.min(1, spinDist / 0.15),
         )
       );
     };
@@ -211,9 +216,16 @@ export function PortraitCloud({ reduced }: PortraitCloudProps) {
 
         const delta = clock.getDelta();
         const elapsed = clock.getElapsedTime();
-        const stage = hoverStageRef.current;
+        let stage = hoverStageRef.current;
         const pointer = pointerRef.current;
         const pointsGroup = cloud.points;
+
+        if (stage === "resetting" && resettingSince === 0) {
+          resettingSince = elapsed;
+        }
+        if (stage === "idle") {
+          resettingSince = 0;
+        }
 
         cloud.time += delta;
         cloud.material.uniforms.uTime.value = cloud.time;
@@ -260,15 +272,22 @@ export function PortraitCloud({ reduced }: PortraitCloudProps) {
           );
 
           const resetProgress = getResetProgress();
+          const resetTimedOut =
+            resettingSince > 0 && elapsed - resettingSince > 0.45;
 
-          if (stage === "resetting" && resetProgress >= RESET_COMPLETE_THRESHOLD) {
+          if (
+            stage === "resetting" &&
+            (resetProgress >= RESET_COMPLETE_THRESHOLD || resetTimedOut)
+          ) {
             hoverStageRef.current = "revealing";
+            stage = "revealing";
           }
 
           if (stage === "revealing" || stage === "photo") {
             revealRef.current = THREE.MathUtils.lerp(revealRef.current, 1, 0.2);
             if (revealRef.current > 0.96) {
               hoverStageRef.current = "photo";
+              stage = "photo";
             }
           }
         }
