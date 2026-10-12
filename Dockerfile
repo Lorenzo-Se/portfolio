@@ -1,6 +1,7 @@
-# App-ID: portfolio-lse
+# App-ID: lse-portfolio
 # Stack: Next.js 16 standalone (Node 20, Debian bookworm-slim).
-# OKD: non-root UID 1001, group 0, Listen 8080. Keine Secrets im Image.
+# Betrieb: pve-iac stacks/lse-portfolio via compose.yml (Host-Port 80 -> 8080).
+# Non-root UID 1001, group 0, Listen 8080. Keine Secrets im Image.
 #
 # Debian statt UBI: ubi9/nodejs-20 ersetzt /etc/ssl/certs durch einen Symlink.
 # Der okd-kaniko-runner mountet dort tc-ca read-only — Kaniko kann das nicht unlinken.

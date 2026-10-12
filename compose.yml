@@ -1,0 +1,14 @@
+# Betrieb auf pve-iac (stacks/lse-portfolio, Rolle compose_app): Ansible
+# schreibt .env mit HTTP_PORT und ruft `docker compose up -d --build` auf.
+services:
+  web:
+    build: .
+    ports:
+      - "${HTTP_PORT:-80}:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
