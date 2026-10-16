@@ -104,8 +104,15 @@ export const projects: Project[] = [
     description:
       "Hackathon-Projekt (ca. 5 Stunden): Host-Bildschirm rendert das Rennen, Controller verbinden sich per QR-Code und steuern ihre Ente über Neigung und Touch-Buttons. Schlanker Express/WebSocket-Relay-Server ohne Build-Step; Highscores persistent über Redis oder In-Memory-Fallback. Bewusst minimal gehalten — reines HTML/CSS/JS ohne schweres Framework.",
     year: "2026",
-    techStack: ["HTML", "CSS", "Express.js", "Websocket", "Redis", "Deplo.io", "Python"],
-    demoUrl: "https://server.b206b21.deploio.app/",
+    techStack: [
+      "HTML",
+      "CSS",
+      "Express.js",
+      "Websocket",
+      "Redis",
+      "Deplo.io",
+      "Python",
+    ],
     githubUrl: "https://github.com/Lorenzo-Se/duck-drift",
     placeholder: false,
   },
