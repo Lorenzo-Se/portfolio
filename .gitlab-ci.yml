@@ -1,0 +1,25 @@
+# Push to main rolls the Proxmox fleet.
+#
+# This repo does not build or push an image. The downstream pipeline in
+# infrastructure/pve-iac checks this commit out on each fleet node and runs
+# `docker compose up --build`, one node at a time, gated on GET /healthz.
+#
+# One-time, in infrastructure/pve-iac → Settings → CI/CD → Job token
+# permissions: allow products/threenet to trigger pipelines.
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+stages:
+  - deploy
+
+deploy_fleet:
+  stage: deploy
+  trigger:
+    project: infrastructure/pve-iac
+    branch: main
+    strategy: depend
+  variables:
+    DEPLOY_STACK: lse-portfolio
+    LSE_REF: $CI_COMMIT_SHA
